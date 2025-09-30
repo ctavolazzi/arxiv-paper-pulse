@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "arxiv-paper-pulse"
+version = "0.1.0"
+description = "Fetch and summarize arXiv papers using a local Ollama model"
+authors = ["AIECO"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+arxiv = "*"
+schedule = "*"
+feedparser = "^6.0.11"
+
+[tool.poetry.scripts]
+arxiv-paper-pulse = "arxiv_paper_pulse.cli:main"
+
+[[tool.poetry.packages]]
+include = "arxiv_paper_pulse"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
