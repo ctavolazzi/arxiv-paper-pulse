@@ -1,28 +1,52 @@
 # arxiv_paper_pulse/config.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SUMMARY_FILE = "arxiv_paper_pulse/summaries.json"
-DEFAULT_MODEL = "llama2"
+DEFAULT_MODEL = "gemini-2.5-flash"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 RAW_DATA_DIR = "arxiv_paper_pulse/data/raw"
 SUMMARY_DIR = "arxiv_paper_pulse/data/summaries"
 BRIEFING_DIR = "arxiv_paper_pulse/data/briefings"
+IMAGE_OUTPUT_DIR = "arxiv_paper_pulse/data/generated_images"
+IMAGE_API_LOG_DIR = "arxiv_paper_pulse/data/api_logs"
+GAME_OUTPUT_DIR = "arxiv_paper_pulse/data/self_generated_games"
+ARTICLE_OUTPUT_DIR = "arxiv_paper_pulse/data/articles"
 
-# Enhanced prompt for Ollama summarization that focuses on implications and context
-SUMMARY_PROMPT = """Provide a comprehensive analysis of the paper, focusing on its real-world implications and significance:
+# Feature flags for Gemini API capabilities
+USE_PDF_PROCESSING = os.getenv("USE_PDF_PROCESSING", "false").lower() == "true"
+USE_STRUCTURED_OUTPUT = os.getenv("USE_STRUCTURED_OUTPUT", "false").lower() == "true"
+USE_CONTEXT_CACHING = os.getenv("USE_CONTEXT_CACHING", "false").lower() == "true"
+USE_GROUNDING = os.getenv("USE_GROUNDING", "false").lower() == "true"
+USE_URL_CONTEXT = os.getenv("USE_URL_CONTEXT", "false").lower() == "true"
+
+# Context caching configuration
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "3600"))  # 1 hour default
+
+# Thinking mode configuration
+THINKING_BUDGET_DEFAULT = int(os.getenv("THINKING_BUDGET_DEFAULT", "1000"))
+THINKING_BUDGET_COMPLEX = int(os.getenv("THINKING_BUDGET_COMPLEX", "5000"))
+
+# Model selection configuration
+MODELS = {
+    "fast": "gemini-2.5-flash-lite",  # High-volume, fast summaries
+    "balanced": "gemini-2.5-flash",    # Default, best price-performance
+    "deep": "gemini-2.5-pro",          # Deep analysis, complex reasoning
+}
+
+AUTO_MODEL_SELECTION = os.getenv("AUTO_MODEL_SELECTION", "true").lower() == "true"
+
+# Note: System instructions are now defined in core.py gemini_summarize() method
+# This prompt is used as a simple wrapper - the detailed guidance comes from system instructions
+SUMMARY_PROMPT = """Analyze the following research paper abstract and provide a comprehensive analysis covering:
 
 1. Key Problem & Research Question: What issue is this paper addressing and why is it important?
-
 2. Methodology & Approach: How did they tackle the problem?
-
 3. Main Findings & Contributions: What are the most important discoveries or advancements?
-
-4. Implications & Significance:
-   - What does this mean for the field or industry?
-   - What practical applications or consequences might result?
-   - How might this change our understanding or current practices?
-
-5. Limitations & Future Directions: What are the constraints of this work and where might it lead?
-
-<think>Analyze the abstract carefully and provide thoughtful insights about the broader impact of this research.</think>
+4. Implications & Significance: What does this mean for the field, industry, and practical applications?
+5. Limitations & Future Directions: What are the constraints and where might this lead?
 
 Paper Abstract:
 {}
