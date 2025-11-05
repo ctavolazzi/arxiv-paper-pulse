@@ -21,3 +21,5 @@ print("Final sys.path:", sys.path)
 def pytest_configure(config):
     config.addinivalue_line("markers", "integration: mark a test as an integration test")
     config.addinivalue_line("markers", "gui: mark a test as a GUI test that requires a display")
+    config.addinivalue_line("markers", "live_api: mark a test as requiring live API calls")
+    config.addinivalue_line("markers", "saves_images: mark a test as saving actual image files")
