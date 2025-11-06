@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArXiv Paper Pulse</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #202122;
+            line-height: 1.6;
+        }
+
+        .site-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #a7d7f9;
+            padding: 0.5em 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            font-size: 1.5em;
+            font-weight: normal;
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        .site-title:hover {
+            text-decoration: underline;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1em;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #0645ad;
+            text-decoration: none;
+            padding: 0.25em 0.5em;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-links a.active {
+            font-weight: bold;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1em;
+            display: flex;
+            gap: 1em;
+        }
+
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 1em;
+            font-size: 0.875em;
+        }
+
+        .sidebar h3 {
+            font-size: 0.875em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+            color: #000;
+            border-bottom: 1px solid #a7d7f9;
+            padding-bottom: 0.25em;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            margin-left: 1em;
+        }
+
+        .sidebar li {
+            margin-bottom: 0.25em;
+        }
+
+        .sidebar a {
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+
+        .sidebar a.active {
+            font-weight: bold;
+            color: #003d82;
+        }
+
+        .selected-papers-counter {
+            background: #0645ad;
+            color: white;
+            padding: 0.5em;
+            margin: 0.5em 0;
+            border-radius: 3px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .selected-papers-counter.full {
+            background: #c62828;
+        }
+
+        .paper-actions {
+            margin-top: 0.5em;
+            display: flex;
+            gap: 0.5em;
+            flex-wrap: wrap;
+        }
+
+        .paper-actions .button {
+            padding: 0.35em 0.75em;
+            font-size: 0.875em;
+        }
+
+        .paper-selected {
+            background: #e6f2fa !important;
+            border-left-color: #2e7d32 !important;
+            border-left-width: 5px !important;
+        }
+
+        .search-header {
+            display: flex;
+            gap: 1em;
+            margin-bottom: 1em;
+            align-items: flex-end;
+        }
+
+        .search-header .form-group {
+            flex: 1;
+        }
+
+        .search-header .form-group input {
+            width: 100%;
+        }
+
+        .paper-detail-view {
+            border: 1px solid #a7d7f9;
+            padding: 1em;
+            margin: 1em 0;
+            background: #f8f9fa;
+        }
+
+        .paper-detail-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+            color: #000;
+        }
+
+        .paper-detail-meta {
+            color: #54595d;
+            font-size: 0.9em;
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+            border-bottom: 1px solid #a7d7f9;
+        }
+
+        .paper-detail-abstract {
+            line-height: 1.6;
+            margin: 1em 0;
+        }
+
+        .badge {
+            background: #0645ad;
+            color: white;
+            padding: 0.2em 0.5em;
+            border-radius: 3px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-right: 0.5em;
+        }
+
+        .badge.selected {
+            background: #2e7d32;
+        }
+
+        .pdf-viewer-container {
+            margin: 1em 0;
+            border: 1px solid #a7d7f9;
+        }
+
+        .pdf-viewer-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+
+        .content-area {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #a7d7f9;
+            padding: 1em 1.5em;
+            min-height: 500px;
+        }
+
+        .content-header {
+            border-bottom: 1px solid #a7d7f9;
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+        }
+
+        .content-header h1 {
+            font-size: 1.8em;
+            font-weight: normal;
+            color: #000;
+            margin-bottom: 0.25em;
+        }
+
+        .content-header .subtitle {
+            color: #54595d;
+            font-size: 0.875em;
+        }
+
+        .section {
+            margin-bottom: 2em;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #000;
+            border-bottom: 1px solid #a7d7f9;
+            margin-bottom: 0.5em;
+            padding-bottom: 0.25em;
+        }
+
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+        }
+
+        .form-table td {
+            padding: 0.5em;
+            vertical-align: top;
+        }
+
+        .form-table td:first-child {
+            width: 150px;
+            font-weight: bold;
+        }
+
+        .form-table input,
+        .form-table select {
+            width: 100%;
+            padding: 0.25em;
+            border: 1px solid #a7d7f9;
+            font-size: 1em;
+        }
+
+        .form-table input:focus,
+        .form-table select:focus {
+            outline: 1px solid #0645ad;
+            border-color: #0645ad;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25em;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25em;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .button {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            color: #0645ad;
+            padding: 0.5em 1em;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .button:hover {
+            background: #e6f2fa;
+            text-decoration: none;
+        }
+
+        .button-primary {
+            background: #0645ad;
+            color: #fff;
+            border-color: #0645ad;
+        }
+
+        .button-primary:hover {
+            background: #003d82;
+            color: #fff;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-box {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 0.75em;
+            margin: 1em 0;
+            display: none;
+        }
+
+        .status-box.info {
+            background: #e6f2fa;
+            border-color: #a7d7f9;
+        }
+
+        .status-box.success {
+            background: #d5f4e6;
+            border-color: #2e7d32;
+        }
+
+        .status-box.error {
+            background: #fee2e2;
+            border-color: #c62828;
+        }
+
+        .paper-list {
+            list-style: none;
+        }
+
+        .paper-item {
+            border-bottom: 1px solid #a7d7f9;
+            padding: 1em 0;
+        }
+
+        .paper-item:last-child {
+            border-bottom: none;
+        }
+
+        .paper-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 0.25em;
+        }
+
+        .paper-title a {
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        .paper-title a:hover {
+            text-decoration: underline;
+        }
+
+        .paper-meta {
+            color: #54595d;
+            font-size: 0.875em;
+            margin-bottom: 0.5em;
+        }
+
+        .paper-meta a {
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        .paper-meta a:hover {
+            text-decoration: underline;
+        }
+
+        .paper-summary {
+            margin-top: 0.5em;
+            line-height: 1.6;
+        }
+
+        .paper-summary pre {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 0.5em;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.875em;
+        }
+
+        .briefing-content {
+            line-height: 1.8;
+            font-family: Georgia, serif;
+        }
+
+        .briefing-content h1,
+        .briefing-content h2,
+        .briefing-content h3 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #000;
+        }
+
+        .briefing-content h1 {
+            font-size: 1.8em;
+            border-bottom: 2px solid #a7d7f9;
+            padding-bottom: 0.25em;
+        }
+
+        .briefing-content h2 {
+            font-size: 1.5em;
+        }
+
+        .briefing-content h3 {
+            font-size: 1.2em;
+        }
+
+        .briefing-content code {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 0.125em 0.25em;
+            font-family: monospace;
+        }
+
+        .briefing-content pre {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 0.75em;
+            overflow-x: auto;
+        }
+
+        .tabs {
+            border-bottom: 1px solid #a7d7f9;
+            margin-bottom: 1em;
+            display: flex;
+            gap: 0;
+        }
+
+        .tab {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            border-bottom: none;
+            padding: 0.5em 1em;
+            cursor: pointer;
+            color: #0645ad;
+            text-decoration: none;
+            margin-right: 0.25em;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            background: #e6f2fa;
+        }
+
+        .tab.active {
+            background: #fff;
+            border-bottom: 1px solid #fff;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2em;
+            color: #54595d;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 2em;
+            color: #54595d;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 1em;
+            margin: 1em 0;
+            font-size: 0.875em;
+        }
+
+        .info-box-title {
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+
+        .health-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+
+        .health-table th,
+        .health-table td {
+            border: 1px solid #a7d7f9;
+            padding: 0.5em;
+            text-align: left;
+        }
+
+        .health-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            background: #f8f9fa;
+            border: 1px solid #a7d7f9;
+            padding: 1em;
+            margin-bottom: 1em;
+            max-height: 400px;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+
+        .chat-message {
+            margin-bottom: 1em;
+        }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-message .message-bubble {
+            display: inline-block;
+            background: #fff;
+            border: 1px solid #a7d7f9;
+            padding: 0.5em 0.75em;
+            max-width: 70%;
+            border-radius: 0;
+        }
+
+        .chat-message.user .message-bubble {
+            background: #e6f2fa;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="site-header">
+        <div class="header-container">
+            <a href="/" class="site-title" onclick="window.location.reload(); return false;">ArXiv Paper Pulse</a>
+            <ul class="nav-links">
+                <li><a href="/" onclick="window.location.reload(); return false;">Search</a></li>
+                <li><a href="#papers" onclick="switchTab('papers'); return false;">My Papers</a></li>
+                <li><a href="#briefing" onclick="switchTab('briefing'); return false;">Briefing</a></li>
+                <li><a href="#chat" onclick="switchTab('chat'); return false;">Chat</a></li>
+                <li><a href="#config" onclick="switchTab('config'); return false;">Config</a></li>
+                <li><a href="/docs" target="_blank">API Docs</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#papers" onclick="switchTab('papers'); return false;" class="nav-link" data-tab="papers">My Papers</a></li>
+                <li><a href="#briefing" onclick="switchTab('briefing'); return false;" class="nav-link" data-tab="briefing">Briefing</a></li>
+                <li><a href="#analysis" onclick="switchTab('analysis'); return false;" class="nav-link" data-tab="analysis">Analysis</a></li>
+                <li><a href="#chat" onclick="switchTab('chat'); return false;" class="nav-link" data-tab="chat">Chat</a></li>
+                <li><a href="#config" onclick="switchTab('config'); return false;" class="nav-link" data-tab="config">Config</a></li>
+                <li><a href="#health" onclick="switchTab('health'); return false;" class="nav-link" data-tab="health">Health</a></li>
+            </ul>
+
+            <h3>Selected Papers</h3>
+            <div class="selected-papers-counter" id="selectedCounter">
+                0 / 7 selected
+            </div>
+            <ul>
+                <li><a href="#papers" onclick="switchTab('papers'); return false;">View Selected</a></li>
+                <li><a href="#" onclick="clearSelectedPapers(); return false;">Clear All</a></li>
+                <li><a href="#" onclick="chatWithSelected(); return false;">Chat with Selected</a></li>
+            </ul>
+
+            <h3>Quick Actions</h3>
+            <ul>
+                <li><a href="#" onclick="document.getElementById('arxivSearchQuery').focus(); return false;">Focus Search</a></li>
+                <li><a href="#" onclick="searchArxiv(); return false;">Run Search</a></li>
+                <li><a href="#papers" onclick="switchTab('papers'); return false;">View My Papers</a></li>
+                <li><a href="#" onclick="loadBriefing(); return false;">Refresh Briefing</a></li>
+                <li><a href="#" onclick="loadHealth(); return false;">Check Health</a></li>
+            </ul>
+
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="/docs" target="_blank">API Documentation</a></li>
+                <li><a href="https://arxiv.org" target="_blank">arXiv.org</a></li>
+                <li><a href="https://ai.google.dev" target="_blank">Gemini API</a></li>
+                <li><a href="#" onclick="showHelp(); return false;">Help &amp; Guide</a></li>
+            </ul>
+        </div>
+
+        <div class="content-area">
+            <!-- Main Search Interface -->
+            <div class="content-header">
+                <h1>ArXiv Paper Pulse</h1>
+                <div class="subtitle">Search and explore research papers with AI</div>
+            </div>
+
+            <!-- Search Bar - Front and Center -->
+            <div class="section" style="background: #f8f9fa; padding: 1.5em; margin-bottom: 1em; border: 2px solid #a7d7f9;">
+                <div class="search-header">
+                    <div class="form-group" style="flex: 4;">
+                        <input type="text" id="arxivSearchQuery" placeholder="Search arXiv: e.g., 'quantum computing', 'neural networks', or 'cat:cs.AI'" value="cat:cs.AI" style="font-size: 1.1em; padding: 0.6em;">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <input type="number" id="arxivMaxResults" value="20" min="5" max="50" style="padding: 0.6em;">
+                    </div>
+                    <div class="form-group">
+                        <button class="button button-primary" onclick="searchArxiv()" style="padding: 0.6em 1.5em; font-size: 1.05em;">Search</button>
+                    </div>
+                </div>
+                <div style="margin-top: 0.5em; font-size: 0.875em; color: #54595d;">
+                    <strong>Quick tips:</strong>
+                    <code>cat:cs.AI</code> (AI papers) •
+                    <code>cat:quant-ph</code> (quantum) •
+                    <code>transformer attention</code> (keywords) •
+                    <code>au:lastname</code> (author)
+                </div>
+            </div>
+
+            <div class="status-box" id="status"></div>
+
+            <!-- Search Results Area -->
+            <div id="searchResults">
+                <div class="empty">Enter a search query above to find papers on arXiv</div>
+            </div>
+
+            <!-- Tabs for Other Features -->
+            <div class="tabs" style="margin-top: 2em;">
+                <a href="#" class="tab" onclick="switchTab('papers'); return false;">My Papers</a>
+                <a href="#" class="tab" onclick="switchTab('briefing'); return false;">Briefing</a>
+                <a href="#" class="tab" onclick="switchTab('analysis'); return false;">Analysis</a>
+                <a href="#" class="tab" onclick="switchTab('chat'); return false;">Chat</a>
+                <a href="#" class="tab" onclick="switchTab('config'); return false;">Config</a>
+                <a href="#" class="tab" onclick="switchTab('health'); return false;">Health</a>
+            </div>
+
+            <div id="configTab" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Advanced Configuration</div>
+                    <table class="form-table">
+                        <tr>
+                            <td>Default Query</td>
+                            <td><input type="text" id="query" value="cat:cs.AI" style="width: 100%;"></td>
+                        </tr>
+                        <tr>
+                            <td>Max Results</td>
+                            <td><input type="number" id="maxResults" value="10" min="1" max="100" style="width: 100px;"></td>
+                        </tr>
+                        <tr>
+                            <td>Model</td>
+                            <td>
+                                <select id="model" style="width: 250px;">
+                                    <option value="">Auto (Recommended)</option>
+                                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                    <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Briefing Format</td>
+                            <td>
+                                <select id="briefingFormat" style="width: 200px;">
+                                    <option value="executive">Executive</option>
+                                    <option value="technical">Technical</option>
+                                    <option value="visual">Visual</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Advanced Options</td>
+                            <td>
+                                <div class="checkbox-group">
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="usePdf" checked>
+                                        <label for="usePdf">Process Full PDFs</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="useStructured">
+                                        <label for="useStructured">Structured JSON Output</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="useCaching">
+                                        <label for="useCaching">Context Caching</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="useUrlContext">
+                                        <label for="useUrlContext">URL Context Tool</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="useGrounding">
+                                        <label for="useGrounding">Google Search Grounding</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="analyzeMultiple">
+                                        <label for="analyzeMultiple">Multi-Paper Analysis</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="useStreaming">
+                                        <label for="useStreaming">Streaming Responses</label>
+                                    </div>
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" id="forcePull">
+                                        <label for="forcePull">Force Fresh Data</label>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <button class="button button-primary" id="summarizeBtn" onclick="summarizePapers()">Summarize Papers</button>
+                </div>
+            </div>
+
+            <div id="papersTab" class="tab-content">
+                <div id="papersContent">
+                    <div class="section">
+                        <div class="section-title">My Selected Papers</div>
+                        <div class="info-box">
+                            <div class="info-box-title">📚 How to Use</div>
+                            <ol style="margin-left: 1.5em; margin-top: 0.5em;">
+                                <li><strong>Search:</strong> Go back to <a href="/" onclick="showSearch(); return false;">Search</a> and enter a query (e.g., "cat:cs.AI")</li>
+                                <li><strong>Browse:</strong> Review the search results</li>
+                                <li><strong>Select:</strong> Click "+ Add to Selection" on papers you're interested in (max 7)</li>
+                                <li><strong>Return here:</strong> Your selected papers will appear here</li>
+                                <li><strong>Chat:</strong> Once selected, click "Chat with Selected" to discuss them with AI</li>
+                            </ol>
+                        </div>
+                        <div style="text-align: center; margin-top: 2em;">
+                            <button class="button button-primary" onclick="showSearch(); document.getElementById('arxivSearchQuery').focus();">
+                                🔍 Go to Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="briefingTab" class="tab-content">
+                <div id="briefingContent">
+                    <div class="loading">Loading briefing...</div>
+                </div>
+            </div>
+
+            <div id="analysisTab" class="tab-content">
+                <div id="analysisContent">
+                    <div class="loading">No analysis yet. Use "Multi-Paper Analysis" feature to compare papers.</div>
+                </div>
+            </div>
+
+            <div id="chatTab" class="tab-content">
+                <div id="chatContent">
+                    <div class="section">
+                        <div class="section-title">Interactive Paper Chat</div>
+                        <div class="info-box">
+                            <div class="info-box-title">About Chat</div>
+                            Ask questions about the papers. The chat session will be created automatically.
+                        </div>
+                        <div id="chatMessages" class="chat-messages">
+                            <div style="color: #54595d; text-align: center; padding: 2em;">
+                                Chat messages will appear here
+                            </div>
+                        </div>
+                        <table class="form-table">
+                            <tr>
+                                <td>Your Question</td>
+                                <td>
+                                    <input type="text" id="chatInput" placeholder="Ask a question about the papers..." style="width: 100%;" onkeypress="handleChatKeypress(event)">
+                                </td>
+                                <td>
+                                    <button class="button button-primary" onclick="askChatQuestion()">Send</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="healthTab" class="tab-content">
+                <div id="healthContent">
+                    <div class="loading">Loading health status...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==============================================
+        // COMPREHENSIVE CONSOLE LOGGING GUIDE
+        // ==============================================
+        // This app uses extensive console logging for development.
+        // Available console methods:
+        console.info('%c📚 Console Logging Guide', 'font-size: 16px; font-weight: bold; color: #0645ad;');
+        console.log('%c Available Methods:', 'font-weight: bold;');
+        console.log('  • console.log() - General logging');
+        console.log('  • console.info() - Informational messages');
+        console.log('  • console.warn() - Warning messages');
+        console.log('  • console.error() - Error messages');
+        console.log('  • console.table() - Display data in table format');
+        console.log('  • console.group() / console.groupEnd() - Group related logs');
+        console.log('  • console.groupCollapsed() - Collapsed groups');
+        console.log('  • console.time() / console.timeEnd() - Measure execution time');
+        console.log('  • console.trace() - Stack trace');
+        console.log('  • console.assert() - Conditional logging');
+        console.log('  • console.dir() - Inspect objects');
+        console.log('  • console.count() - Count occurrences');
+        console.log('  • console.clear() - Clear console');
+        console.log('%c Filtering Tips:', 'font-weight: bold;');
+        console.log('  • Use emoji icons to filter: 🔍 🚀 📄 📌 ✅ ❌ ⚠️');
+        console.log('  • Filter by keyword: "Search", "Display", "Selection"');
+        console.log('  • Expand groups to see detailed logs');
+        console.log('%c' + '='.repeat(50), 'color: #a7d7f9;');
+
+        const API_BASE = window.location.origin;
+        const MAX_SELECTED_PAPERS = 7;
+        let selectedPapers = JSON.parse(localStorage.getItem('selectedPapers') || '[]');
+        let searchCache = JSON.parse(sessionStorage.getItem('searchCache') || '{}');
+        let lastSearchQuery = sessionStorage.getItem('lastSearchQuery') || '';
+        let displayedPapers = []; // Store currently displayed papers for button actions
+
+        console.log('🔧 Global Variables Initialized:');
+        console.log('  • API_BASE:', API_BASE);
+        console.log('  • MAX_SELECTED_PAPERS:', MAX_SELECTED_PAPERS);
+        console.log('  • selectedPapers:', selectedPapers.length, 'papers');
+        console.log('  • searchCache:', Object.keys(searchCache).length, 'queries');
+        console.log('  • lastSearchQuery:', lastSearchQuery);
+
+        // Update selected papers counter
+        function updateSelectedCounter() {
+            const counter = document.getElementById('selectedCounter');
+            const count = selectedPapers.length;
+            counter.textContent = `${count} / ${MAX_SELECTED_PAPERS} selected`;
+
+            if (count >= MAX_SELECTED_PAPERS) {
+                counter.classList.add('full');
+            } else {
+                counter.classList.remove('full');
+            }
+
+            // Save to localStorage
+            localStorage.setItem('selectedPapers', JSON.stringify(selectedPapers));
+        }
+
+        // Add paper to selected list
+        function togglePaperSelection(paper) {
+            console.group('📌 Toggle Paper Selection');
+            console.log('Paper:', paper);
+
+            const paperId = paper.entry_id || paper.url || paper.id;
+            console.log('Paper ID:', paperId);
+
+            const index = selectedPapers.findIndex(p => (p.entry_id || p.url || p.id) === paperId);
+            console.log('Current index in selection:', index);
+            console.log('Current selection count:', selectedPapers.length);
+
+            if (index >= 0) {
+                // Remove from selection
+                console.log('➖ Removing paper from selection');
+                selectedPapers.splice(index, 1);
+                showStatus('Paper removed from selection', 'info');
+                console.log('New selection count:', selectedPapers.length);
+            } else {
+                // Add to selection
+                if (selectedPapers.length >= MAX_SELECTED_PAPERS) {
+                    console.warn(`⚠️ Maximum ${MAX_SELECTED_PAPERS} papers reached`);
+                    showStatus(`Maximum ${MAX_SELECTED_PAPERS} papers allowed. Remove some first.`, 'error');
+                    console.groupEnd();
+                    return false;
+                }
+                console.log('➕ Adding paper to selection');
+                selectedPapers.push(paper);
+                showStatus('Paper added to selection', 'success');
+                console.log('New selection count:', selectedPapers.length);
+            }
+
+            updateSelectedCounter();
+            console.log('✅ Selection updated');
+            console.log('Selected papers:', selectedPapers.map(p => p.title));
+            console.groupEnd();
+            return true;
+        }
+
+        // Check if paper is selected
+        function isPaperSelected(paper) {
+            const paperId = paper.entry_id || paper.url || paper.id;
+            return selectedPapers.some(p => (p.entry_id || p.url || p.id) === paperId);
+        }
+
+        // Index-based helper functions (safer for onclick handlers - no quote escaping issues)
+        function togglePaperByIndex(index) {
+            console.group('📌 Toggle Paper by Index');
+            console.log('Index:', index);
+            if (index < 0 || index >= displayedPapers.length) {
+                console.error('❌ Invalid paper index');
+                console.groupEnd();
+                return;
+            }
+            const paper = displayedPapers[index];
+            console.log('Paper:', paper.title);
+            togglePaperSelection(paper);
+            // Refresh display
+            displaySearchResults(displayedPapers);
+            console.groupEnd();
+        }
+
+        function viewPaperByIndex(index) {
+            console.log('📄 View Paper by Index:', index);
+            if (index < 0 || index >= displayedPapers.length) {
+                console.error('❌ Invalid paper index');
+                return;
+            }
+            const paper = displayedPapers[index];
+            viewPaperDetail(paper);
+        }
+
+        function viewPDFByIndex(index) {
+            console.log('📑 View PDF by Index:', index);
+            if (index < 0 || index >= displayedPapers.length) {
+                console.error('❌ Invalid paper index');
+                return;
+            }
+            const paper = displayedPapers[index];
+            let url = paper.url || paper.entry_id;
+            if (!url.startsWith('http')) {
+                const paperId = url.split('/').pop();
+                url = `https://arxiv.org/abs/${paperId}`;
+            }
+            const pdfUrl = url.replace('/abs/', '/pdf/') + '.pdf';
+            viewPDF(pdfUrl, paper.title);
+        }
+
+        function summarizePaperByIndex(index) {
+            console.log('🤖 Summarize Paper by Index:', index);
+            if (index < 0 || index >= displayedPapers.length) {
+                console.error('❌ Invalid paper index');
+                return;
+            }
+            const paper = displayedPapers[index];
+            summarizeSinglePaper(paper);
+        }
+
+        // Clear all selected papers
+        function clearSelectedPapers() {
+            if (confirm('Clear all selected papers?')) {
+                selectedPapers = [];
+                updateSelectedCounter();
+                showStatus('All selected papers cleared', 'info');
+                // Refresh current view
+                const hash = window.location.hash.slice(1);
+                if (hash === 'search') {
+                    const lastSearch = document.getElementById('arxivSearchQuery').value;
+                    if (searchCache[lastSearch]) {
+                        displaySearchResults(searchCache[lastSearch]);
+                    }
+                }
+            }
+        }
+
+        // View selected papers
+        function viewSelectedPapers() {
+            console.log('📋 View Selected Papers');
+            if (selectedPapers.length === 0) {
+                showStatus('No papers selected yet. Search and select papers first!', 'info');
+                showSearch();
+                return;
+            }
+
+            // DON'T call switchTab here - just render the content
+            // switchTab will be called from the nav/button that calls this function
+            const contentEl = document.getElementById('papersContent');
+            console.log('Rendering', selectedPapers.length, 'selected papers');
+
+            let html = '<div class="section"><div class="section-title">Selected Papers for Chat</div></div>';
+            html += '<ul class="paper-list">';
+
+            selectedPapers.forEach(paper => {
+                let url = paper.url || paper.entry_id;
+                if (!url.startsWith('http')) {
+                    const paperId = url.split('/').pop();
+                    url = `https://arxiv.org/abs/${paperId}`;
+                }
+
+                const paperId = paper.entry_id || paper.url || paper.id;
+
+                html += '<li class="paper-item paper-selected">';
+                html += `<div class="paper-title"><a href="${url}" target="_blank">${escapeHtml(paper.title)}</a> <span class="badge selected">SELECTED</span></div>`;
+                html += `<div class="paper-meta">Published: ${paper.published || 'Unknown'}</div>`;
+                if (paper.abstract) {
+                    html += `<div class="paper-summary">${escapeHtml(paper.abstract).substring(0, 300)}...</div>`;
+                }
+                html += '<div class="paper-actions">';
+                html += `<button class="button" onclick="togglePaperSelection(${JSON.stringify(paper).replace(/"/g, '&quot;')}); loadPapers();">Remove</button>`;
+                html += `<button class="button" onclick="viewPaperDetail(${JSON.stringify(paper).replace(/"/g, '&quot;')})">View Details</button>`;
+                html += '</div>';
+                html += '</li>';
+            });
+
+            html += '</ul>';
+            html += '<div class="paper-actions" style="margin-top: 1em;"><button class="button button-primary" onclick="chatWithSelected()">Chat with Selected Papers</button></div>';
+
+            contentEl.innerHTML = html;
+        }
+
+        // Chat with selected papers
+        async function chatWithSelected() {
+            console.group('💬 Chat with Selected Papers');
+            if (selectedPapers.length === 0) {
+                showStatus('No papers selected. Search and select papers first.', 'error');
+                console.groupEnd();
+                return;
+            }
+
+            switchTab('chat');
+            console.log('Selected papers count:', selectedPapers.length);
+
+            // Check if papers are already summarized in the backend
+            const messagesEl = document.getElementById('chatMessages');
+            messagesEl.innerHTML = '<div class="loading">Checking papers...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/papers`);
+                const data = await response.json();
+                const summarizedPapers = data.papers || [];
+
+                console.log('Summarized papers in backend:', summarizedPapers.length);
+
+                // Check if any of our selected papers are already summarized
+                const selectedIds = selectedPapers.map(p => p.entry_id || p.url || p.id);
+                const summarizedIds = summarizedPapers.map(p => p.entry_id || p.url || p.id);
+                const needsSummarization = selectedIds.some(id => !summarizedIds.includes(id));
+
+                console.log('Needs summarization:', needsSummarization);
+
+                if (needsSummarization || summarizedPapers.length === 0) {
+                    // Show "Prepare Papers" button
+                    messagesEl.innerHTML = `
+                        <div class="section">
+                            <div class="info-box" style="background: #fffbcc; border-color: #fc3;">
+                                <div class="info-box-title">⚡ Papers Need Preparation</div>
+                                Before we can chat, I need to analyze these ${selectedPapers.length} papers:<br><br>
+                                ${selectedPapers.map((p, i) => `${i+1}. ${escapeHtml(p.title)}`).join('<br>')}<br><br>
+                                This will take about 10-30 seconds per paper.
+                            </div>
+                            <div style="text-align: center; margin-top: 2em;">
+                                <button class="button button-primary" style="font-size: 1.2em; padding: 1em 2em;" onclick="preparePapersForChat()">
+                                    🚀 Prepare Papers & Start Chat
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Papers already summarized, ready to chat!
+                    messagesEl.innerHTML = `
+                        <div class="chat-message">
+                            <div class="message-bubble">✅ I've loaded ${selectedPapers.length} papers for our discussion:<br><br>
+                            ${selectedPapers.map((p, i) => `${i+1}. ${escapeHtml(p.title)}`).join('<br>')}<br><br>
+                            What would you like to know about these papers?</div>
+                        </div>
+                    `;
+                    chatPapers = selectedPapers;
+                    showStatus(`Chat ready with ${selectedPapers.length} papers`, 'success');
+                }
+            } catch (error) {
+                console.error('Error checking papers:', error);
+                messagesEl.innerHTML = `
+                    <div class="empty">Error checking papers: ${error.message}<br><br>
+                    <button class="button" onclick="chatWithSelected()">Try Again</button></div>
+                `;
+            }
+            console.groupEnd();
+        }
+
+        async function preparePapersForChat() {
+            console.group('🚀 Prepare Papers for Chat');
+            const messagesEl = document.getElementById('chatMessages');
+
+            messagesEl.innerHTML = `
+                <div class="section">
+                    <div class="info-box" style="background: #e8f5e9; border-color: #4caf50;">
+                        <div class="info-box-title">⏳ AI Analysis in Progress...</div>
+                        <div id="streamingText" style="max-height: 300px; overflow-y: auto; background: #fff; padding: 1em; border-radius: 4px; margin: 1em 0; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap; border: 2px solid #4caf50; color: #000; min-height: 100px;">
+                            <span style="color: #666; font-weight: bold;">⏳ Connecting to AI...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const streamingText = document.getElementById('streamingText');
+
+            try {
+                // Take first paper for testing
+                const paper = selectedPapers[0];
+                console.log('📄 Processing:', paper.title);
+
+                const fullText = `Title: ${paper.title}\n\nAbstract: ${paper.abstract || 'No abstract available'}`;
+
+                const response = await fetch(`${API_BASE}/api/summarize-stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ abstract: fullText })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let accumulatedText = '';
+
+                // Read and display chunks
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const jsonStr = line.substring(6);
+                            try {
+                                const data = JSON.parse(jsonStr);
+
+                                if (data.type === 'status') {
+                                    streamingText.innerHTML = `<span style="color: #2196F3;">${escapeHtml(data.text)}</span>\n\n`;
+                                } else if (data.type === 'chunk') {
+                                    accumulatedText += data.text;
+                                    streamingText.innerHTML = `<div style="color: #000;">${escapeHtml(accumulatedText)}<span style="color: #4caf50;">▋</span></div>`;
+                                    streamingText.scrollTop = streamingText.scrollHeight;
+                                } else if (data.type === 'done') {
+                                    streamingText.innerHTML = `<div style="color: #000;">${escapeHtml(accumulatedText)}</div>`;
+                                    console.log('✅ Complete!');
+                                }
+                            } catch (e) {
+                                console.warn('Parse error:', e);
+                            }
+                        }
+                    }
+                }
+
+                console.groupEnd();
+
+            } catch (error) {
+                console.error('❌ Error:', error);
+                streamingText.innerHTML = `<span style="color: red;">❌ Error: ${escapeHtml(error.message)}</span>`;
+                console.groupEnd();
+            }
+        }
+
+        // Stream paper summary using EventSource (Server-Sent Events)
+        async function streamPaperSummary(abstract, displayElement) {
+            return new Promise((resolve, reject) => {
+                console.group('🌊 Stream Paper Summary');
+                console.log('Abstract length:', abstract.length);
+                console.log('Display element:', displayElement);
+                console.log('Display element ID:', displayElement.id);
+                console.log('Display element is visible:', displayElement.offsetHeight > 0);
+                console.log('Display element innerHTML:', displayElement.innerHTML.substring(0, 100));
+
+                let accumulatedText = '';
+                let chunkCount = 0;
+
+                console.log('🚀 Starting fetch to:', `${API_BASE}/api/summarize-stream`);
+                console.log('📤 Request body:', { abstract: abstract.substring(0, 100) + '...' });
+
+                fetch(`${API_BASE}/api/summarize-stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ abstract })
+                }).then(response => {
+                    console.log('📡 Response received! Status:', response.status, response.statusText);
+                    console.log('📡 Response headers:', [...response.headers.entries()]);
+
+                    if (!response.ok) {
+                        console.error('❌ Response not OK!', response.status);
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    console.log('✅ Response OK, getting reader...');
+                    const reader = response.body.getReader();
+                    console.log('✅ Reader obtained:', reader);
+                    const decoder = new TextDecoder();
+
+                    function readStream() {
+                        reader.read().then(({ done, value }) => {
+                            if (done) {
+                                console.log('✅ Stream complete');
+                                console.log('Total chunks received:', chunkCount);
+                                console.log('Total text length:', accumulatedText.length);
+                                console.log('Final text preview:', accumulatedText.substring(0, 100) + '...');
+                                console.groupEnd();
+                                resolve(accumulatedText);
+                                return;
+                            }
+
+                            const chunk = decoder.decode(value, { stream: true });
+                            console.log('📦 Raw chunk received:', chunk.substring(0, 200));
+                            const lines = chunk.split('\n');
+
+                            for (const line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    const jsonStr = line.substring(6);
+                                    console.log('🔍 Parsing JSON:', jsonStr.substring(0, 100));
+                                    try {
+                                        const data = JSON.parse(jsonStr);
+                                        console.log('✅ Parsed data type:', data.type);
+
+                                        if (data.type === 'status') {
+                                            console.log('📊 Status:', data.text);
+                                            displayElement.innerHTML = `<span style="color: #2196F3;">${escapeHtml(data.text)}</span>\n\n`;
+                                        } else if (data.type === 'chunk') {
+                                            chunkCount++;
+                                            accumulatedText += data.text;
+                                            console.log(`📝 Chunk ${chunkCount}: Added ${data.text.length} chars`);
+                                            console.log(`   Current total: ${accumulatedText.length} chars`);
+
+                                            // Update display with accumulated text in a BOLD, VISIBLE way
+                                            const displayHTML = `<div style="color: #000; font-weight: normal; font-size: 14px;">${escapeHtml(accumulatedText)}<span style="color: #4caf50; font-weight: bold;">▋</span></div>`;
+                                            displayElement.innerHTML = displayHTML;
+
+                                            // Debug: Log what we're setting
+                                            if (chunkCount === 1) {
+                                                console.log('🎨 Setting first chunk HTML:', displayHTML.substring(0, 150));
+                                                console.log('🎨 Element after update:', displayElement.innerHTML.substring(0, 150));
+                                            }
+
+                                            // Auto-scroll to bottom
+                                            displayElement.scrollTop = displayElement.scrollHeight;
+
+                                            // Visual feedback in console
+                                            if (chunkCount % 5 === 0) {
+                                                console.log(`   Preview: ${accumulatedText.substring(accumulatedText.length - 50)}`);
+                                            }
+                                        } else if (data.type === 'done') {
+                                            console.log('✅ Analysis complete signal received');
+                                            console.log('Final accumulated text length:', accumulatedText.length);
+                                        } else if (data.type === 'error') {
+                                            console.error('❌ Stream error:', data.message);
+                                            displayElement.innerHTML = `<span style="color: red;">Error: ${escapeHtml(data.message)}</span>`;
+                                            reject(new Error(data.message));
+                                            return;
+                                        }
+                                    } catch (e) {
+                                        console.warn('⚠️ Failed to parse SSE data:', e);
+                                        console.warn('   Raw line:', line.substring(0, 200));
+                                    }
+                                }
+                            }
+
+                            readStream();
+                        }).catch(err => {
+                            console.error('❌ Stream read error:', err);
+                            console.groupEnd();
+                            reject(err);
+                        });
+                    }
+
+                    readStream();
+                }).catch(err => {
+                    console.error('❌ FETCH ERROR!', err);
+                    console.error('Error name:', err.name);
+                    console.error('Error message:', err.message);
+                    console.error('Error stack:', err.stack);
+                    displayElement.innerHTML = `<span style="color: red; font-weight: bold;">FETCH ERROR: ${escapeHtml(err.message)}</span>`;
+                    console.groupEnd();
+                    reject(err);
+                });
+            });
+        }
+
+        async function showStatus(message, type = 'info') {
+            const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            console.log(`${icon} Status [${type}]:`, message);
+
+            const statusEl = document.getElementById('status');
+            console.log('Status element:', statusEl);
+            statusEl.textContent = message;
+            statusEl.className = `status-box ${type}`;
+            statusEl.style.display = 'block';
+            console.log('Status displayed:', { message, type, display: statusEl.style.display });
+
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+                console.log('Status hidden after 5s');
+            }, 5000);
+        }
+
+        async function summarizePapers() {
+            const query = document.getElementById('query').value;
+            const maxResults = parseInt(document.getElementById('maxResults').value);
+            const forcePull = document.getElementById('forcePull').checked;
+
+            const btn = document.getElementById('summarizeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Summarizing...';
+            showStatus('Starting summarization. This may take a while...', 'info');
+
+            try {
+                const params = new URLSearchParams({
+                    query,
+                    max_results: maxResults,
+                    force_pull: forcePull
+                });
+
+                const response = await fetch(`${API_BASE}/api/summarize?${params}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                showStatus(`Successfully summarized ${data.count} papers!`, 'success');
+                loadPapers();
+                loadBriefing();
+
+                if (document.getElementById('analyzeMultiple').checked && data.papers && data.papers.length > 1) {
+                    await performMultiPaperAnalysis(data.papers);
+                }
+
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Summarize Papers';
+            }
+        }
+
+        async function loadPapers() {
+            console.group('📚 Load Papers Tab');
+            const contentEl = document.getElementById('papersContent');
+            console.log('Loading papers from API...');
+
+            // Check if we have selected papers to show instead
+            if (selectedPapers.length > 0) {
+                console.log('✅ Showing selected papers:', selectedPapers.length);
+                viewSelectedPapers();
+                console.groupEnd();
+                return;
+            }
+
+            contentEl.innerHTML = '<div class="loading">Loading papers...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/papers`);
+                const data = await response.json();
+                console.log('API response:', data);
+
+                if (!data.papers || data.papers.length === 0) {
+                    console.warn('⚠️ No papers in API storage');
+                    console.log('💡 User should search first!');
+                    // Keep the helpful empty state
+                    console.groupEnd();
+                    return;
+                }
+
+                console.log('Found', data.papers.length, 'summarized papers');
+                const useStructured = document.getElementById('useStructured').checked;
+                let html = '<div class="section"><div class="section-title">Previously Summarized Papers</div></div>';
+                html += '<ul class="paper-list">';
+
+                data.papers.forEach(paper => {
+                    let url = paper.url;
+                    if (!url.startsWith('http')) {
+                        const paperId = url.split('/').pop();
+                        url = `https://arxiv.org/abs/${paperId}`;
+                    }
+
+                    html += '<li class="paper-item">';
+                    html += `<div class="paper-title"><a href="${url}" target="_blank">${escapeHtml(paper.title)}</a></div>`;
+                    html += `<div class="paper-meta">Published: ${paper.published || 'Unknown'} | <a href="${url}" target="_blank">View on arXiv</a></div>`;
+
+                    if (paper.summary) {
+                        html += `<div class="paper-summary">${escapeHtml(paper.summary)}</div>`;
+                    }
+
+                    if (useStructured && paper.structured_analysis) {
+                        html += `<div class="paper-summary"><pre>${JSON.stringify(paper.structured_analysis, null, 2)}</pre></div>`;
+                    }
+
+                    html += '</li>';
+                });
+
+                html += '</ul>';
+                contentEl.innerHTML = html;
+                console.log('✅ Papers displayed');
+            } catch (error) {
+                console.error('❌ Error loading papers:', error);
+                contentEl.innerHTML = `<div class="empty">Error loading papers: ${error.message}</div>`;
+            }
+            console.groupEnd();
+        }
+
+        async function loadBriefing() {
+            const contentEl = document.getElementById('briefingContent');
+            contentEl.innerHTML = '<div class="loading">Loading briefing...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/briefing`);
+                const data = await response.json();
+
+                // Convert markdown-like formatting to HTML
+                let content = data.content;
+                content = content.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                content = content.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                content = content.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                content = content.replace(/^\*\*(.*)\*\*$/gim, '<strong>$1</strong>');
+                content = content.replace(/\n\n/g, '</p><p>');
+                content = '<p>' + content + '</p>';
+                content = content.replace(/<p><h/g, '<h');
+                content = content.replace(/<\/h([1-6])><p>/g, '</h$1>');
+                content = content.replace(/<p><\/p>/g, '');
+
+                contentEl.innerHTML = `<div class="briefing-content">${content}</div>`;
+            } catch (error) {
+                if (error.message.includes('404')) {
+                    contentEl.innerHTML = '<div class="empty">No briefing file found. Summarize some papers first.</div>';
+                } else {
+                    contentEl.innerHTML = `<div class="empty">Error loading briefing: ${error.message}</div>`;
+                }
+            }
+        }
+
+        async function performMultiPaperAnalysis(papers) {
+            const contentEl = document.getElementById('analysisContent');
+            contentEl.innerHTML = '<div class="loading">Performing multi-paper analysis...</div>';
+
+            try {
+                const useStructured = document.getElementById('useStructured').checked;
+                const paperIds = papers.slice(0, 5).map(p => p.id || p.entry_id?.split('/').pop() || '').filter(Boolean);
+
+                const response = await fetch(`${API_BASE}/api/analyze-multiple`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paper_ids: paperIds,
+                        use_structured_output: useStructured
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.analysis) {
+                    let html = '<div class="section">';
+                    html += '<div class="section-title">Comparative Analysis</div>';
+
+                    if (useStructured && typeof data.analysis === 'object') {
+                        html += `<div class="paper-summary"><pre>${JSON.stringify(data.analysis, null, 2)}</pre></div>`;
+                    } else {
+                        html += `<div class="paper-summary">${escapeHtml(data.analysis).replace(/\n/g, '<br>')}</div>`;
+                    }
+
+                    html += '</div>';
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = '<div class="empty">Analysis in progress or unavailable.</div>';
+                }
+            } catch (error) {
+                contentEl.innerHTML = `<div class="empty">Error performing analysis: ${error.message}</div>`;
+            }
+        }
+
+        // Search arXiv
+        async function searchArxiv() {
+            console.group('🔍 Search arXiv');
+            const query = document.getElementById('arxivSearchQuery').value;
+            const maxResults = parseInt(document.getElementById('arxivMaxResults').value);
+            console.log('Query:', query);
+            console.log('Max Results:', maxResults);
+
+            if (!query) {
+                console.warn('❌ No query provided');
+                showStatus('Please enter a search query', 'error');
+                console.groupEnd();
+                return;
+            }
+
+            const contentEl = document.getElementById('searchResults');
+            console.log('Search Results Element:', contentEl);
+            contentEl.innerHTML = '<div class="loading">Searching arXiv...</div>';
+            showStatus('Searching arXiv...', 'info');
+
+            try {
+                const params = new URLSearchParams({
+                    query,
+                    max_results: maxResults
+                });
+                const url = `${API_BASE}/api/search?${params}`;
+                console.log('Fetch URL:', url);
+
+                const response = await fetch(url, { method: 'POST' });
+                console.log('Response Status:', response.status);
+                console.log('Response OK:', response.ok);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('❌ API Error:', errorData);
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ API Response:', data);
+                console.log('Papers Count:', data.papers?.length || 0);
+                console.table(data.papers?.slice(0, 3)); // Show first 3 papers in table format
+
+                searchCache[query] = data.papers || [];
+                lastSearchQuery = query;
+
+                // Persist to sessionStorage (lasts until browser tab is closed)
+                sessionStorage.setItem('searchCache', JSON.stringify(searchCache));
+                sessionStorage.setItem('lastSearchQuery', lastSearchQuery);
+                console.log('📦 Updated Search Cache:', Object.keys(searchCache));
+                console.log('💾 Saved to sessionStorage');
+
+                displaySearchResults(data.papers || []);
+                showStatus(`Found ${data.papers.length} papers`, 'success');
+                console.log('✅ Search Complete');
+            } catch (error) {
+                console.error('❌ Search Error:', error);
+                console.error('Error Stack:', error.stack);
+                contentEl.innerHTML = `<div class="empty">Error: ${error.message}<br><br>Try a different query or check that the API is running.</div>`;
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+            console.groupEnd();
+        }
+
+        // Display search results
+        function displaySearchResults(papers) {
+            console.group('📄 Display Search Results');
+            console.log('Papers to display:', papers?.length || 0);
+            console.log('Papers data:', papers);
+
+            const contentEl = document.getElementById('searchResults');
+            console.log('Target element:', contentEl);
+            console.log('Element display BEFORE:', contentEl.style.display);
+
+            // FORCE SHOW the search results when displaying
+            contentEl.style.display = 'block';
+            console.log('Element display AFTER force show:', contentEl.style.display);
+
+            // Also ensure search bar is visible
+            const searchSection = contentEl.previousElementSibling;
+            if (searchSection) {
+                searchSection.style.display = 'block';
+                console.log('Search bar section also shown');
+            }
+
+            if (!papers || papers.length === 0) {
+                console.warn('⚠️ No papers to display');
+                contentEl.innerHTML = '<div class="empty">No papers found for this query</div>';
+                displayedPapers = [];
+                console.groupEnd();
+                return;
+            }
+
+            // Store papers globally for button actions
+            displayedPapers = papers;
+            console.log('📦 Stored', displayedPapers.length, 'papers globally');
+            console.log('Building HTML for', papers.length, 'papers...');
+            let html = '<div class="section"><div class="section-title">Search Results</div></div>';
+            html += '<ul class="paper-list">';
+
+            papers.forEach((paper, index) => {
+                console.log(`Paper ${index + 1}:`, {
+                    title: paper.title,
+                    url: paper.url,
+                    entry_id: paper.entry_id,
+                    abstract_length: paper.abstract?.length || 0
+                });
+
+                let url = paper.url || paper.entry_id;
+                if (!url.startsWith('http')) {
+                    const paperId = url.split('/').pop();
+                    url = `https://arxiv.org/abs/${paperId}`;
+                }
+
+                const isSelected = isPaperSelected(paper);
+                const selectedClass = isSelected ? ' paper-selected' : '';
+                const selectedBadge = isSelected ? '<span class="badge selected">✓ SELECTED</span>' : '';
+
+                console.log(`  - URL: ${url}`);
+                console.log(`  - Selected: ${isSelected}`);
+
+                html += `<li class="paper-item${selectedClass}">`;
+                html += `<div class="paper-title"><a href="${url}" target="_blank">${escapeHtml(paper.title)}</a> ${selectedBadge}</div>`;
+                html += `<div class="paper-meta">`;
+                html += `Published: ${paper.published || 'Unknown'} | `;
+                html += `<a href="${url}" target="_blank">View on arXiv</a>`;
+                if (url) {
+                    const pdfUrl = url.replace('/abs/', '/pdf/') + '.pdf';
+                    html += ` | <a href="${pdfUrl}" target="_blank">PDF</a>`;
+                }
+                html += `</div>`;
+
+                if (paper.abstract) {
+                    const shortAbstract = paper.abstract.substring(0, 300);
+                    html += `<div class="paper-summary">${escapeHtml(shortAbstract)}${paper.abstract.length > 300 ? '...' : ''}</div>`;
+                }
+
+                html += '<div class="paper-actions">';
+
+                // Use simple index-based onclick handlers (no quote escaping issues!)
+                if (isSelected) {
+                    html += `<button class="button" onclick="togglePaperByIndex(${index}); return false;">✓ Remove from Selection</button>`;
+                } else {
+                    html += `<button class="button button-primary" onclick="togglePaperByIndex(${index}); return false;">+ Add to Selection</button>`;
+                }
+
+                html += `<button class="button" onclick="viewPaperByIndex(${index}); return false;">View Details</button>`;
+
+                if (url) {
+                    html += `<button class="button" onclick="viewPDFByIndex(${index}); return false;">View PDF</button>`;
+                }
+
+                html += `<button class="button" onclick="summarizePaperByIndex(${index}); return false;">Get AI Summary</button>`;
+
+                html += '</div>';
+                html += '</li>';
+            });
+
+            html += '</ul>';
+
+            console.log('HTML length:', html.length);
+            console.log('Setting innerHTML...');
+            contentEl.innerHTML = html;
+            console.log('✅ Display complete');
+            console.log('Content element HTML:', contentEl.innerHTML.substring(0, 200) + '...');
+            console.groupEnd();
+        }
+
+        // View paper details
+        function viewPaperDetail(paper) {
+            let url = paper.url || paper.entry_id;
+            if (!url.startsWith('http')) {
+                const paperId = url.split('/').pop();
+                url = `https://arxiv.org/abs/${paperId}`;
+            }
+
+            const pdfUrl = url.replace('/abs/', '/pdf/') + '.pdf';
+            const isSelected = isPaperSelected(paper);
+
+            let html = '<div class="paper-detail-view">';
+            html += `<div class="paper-detail-title">${escapeHtml(paper.title)}</div>`;
+            html += `<div class="paper-detail-meta">`;
+            html += `<strong>Published:</strong> ${paper.published || 'Unknown'}<br>`;
+            html += `<strong>arXiv ID:</strong> ${url.split('/').pop()}<br>`;
+            html += `<strong>Links:</strong> `;
+            html += `<a href="${url}" target="_blank">arXiv</a> | `;
+            html += `<a href="${pdfUrl}" target="_blank">PDF</a>`;
+            html += `</div>`;
+
+            if (paper.abstract) {
+                html += `<div class="paper-detail-abstract">`;
+                html += `<strong>Abstract:</strong><br>${escapeHtml(paper.abstract)}`;
+                html += `</div>`;
+            }
+
+            if (paper.summary) {
+                html += `<div class="paper-detail-abstract">`;
+                html += `<strong>AI Summary:</strong><br>${escapeHtml(paper.summary)}`;
+                html += `</div>`;
+            }
+
+            html += '<div class="paper-actions" style="margin-top: 1em;">';
+
+            if (isSelected) {
+                html += `<button class="button" onclick='togglePaperSelection(${JSON.stringify(paper).replace(/'/g, "\\'")}); history.back();'>Remove from Selection</button>`;
+            } else {
+                html += `<button class="button button-primary" onclick='togglePaperSelection(${JSON.stringify(paper).replace(/'/g, "\\'")}); history.back();'>Add to Selection</button>`;
+            }
+
+            html += `<button class="button" onclick='viewPDF("${pdfUrl}", "${escapeHtml(paper.title)}")'>View PDF</button>`;
+            html += `<button class="button" onclick='summarizeSinglePaper(${JSON.stringify(paper).replace(/'/g, "\\'")})'>Get AI Summary</button>`;
+            html += `<button class="button" onclick="history.back()">Back to Results</button>`;
+            html += '</div>';
+            html += '</div>';
+
+            document.getElementById('searchResults').innerHTML = html;
+        }
+
+        // View PDF
+        function viewPDF(pdfUrl, title) {
+            let html = '<div class="section">';
+            html += `<div class="section-title">${escapeHtml(title)}</div>`;
+            html += '<div class="paper-actions" style="margin-bottom: 1em;">';
+            html += `<button class="button" onclick="history.back()">Back to Paper</button>`;
+            html += `<a href="${pdfUrl}" target="_blank" class="button button-primary">Open PDF in New Tab</a>`;
+            html += '</div>';
+            html += '<div class="pdf-viewer-container">';
+            html += `<iframe src="${pdfUrl}"></iframe>`;
+            html += '</div>';
+            html += '</div>';
+
+            document.getElementById('searchResults').innerHTML = html;
+        }
+
+        // Summarize single paper
+        async function summarizeSinglePaper(paper) {
+            if (!paper.abstract) {
+                showStatus('No abstract available to summarize', 'error');
+                return;
+            }
+
+            showStatus('Generating AI summary...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/summarize-structured`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ abstract: paper.abstract })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success' && data.analysis) {
+                    paper.summary = data.analysis.problem_statement || JSON.stringify(data.analysis);
+                    paper.structured_analysis = data.analysis;
+                    viewPaperDetail(paper);
+                    showStatus('AI summary generated!', 'success');
+                } else {
+                    throw new Error('Failed to generate summary');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function searchSimilarPapers() {
+            const query = document.getElementById('searchQuery').value;
+            const threshold = parseFloat(document.getElementById('similarityThreshold').value);
+
+            if (!query) {
+                showStatus('Please enter a search query', 'error');
+                return;
+            }
+
+            const contentEl = document.getElementById('similarPapersContent');
+            contentEl.innerHTML = '<div class="loading">Finding similar papers...</div>';
+
+            try {
+                const papersResponse = await fetch(`${API_BASE}/api/papers`);
+                const papersData = await papersResponse.json();
+
+                if (!papersData.papers || papersData.papers.length === 0) {
+                    contentEl.innerHTML = '<div class="empty">No papers available for search.</div>';
+                    return;
+                }
+
+                const targetPaper = { title: query, abstract: query };
+                const response = await fetch(`${API_BASE}/api/embeddings/similar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        target_paper: targetPaper,
+                        all_papers: papersData.papers,
+                        top_k: 5,
+                        threshold: threshold
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.similar_papers && data.similar_papers.length > 0) {
+                    let html = '<ul class="paper-list">';
+                    data.similar_papers.forEach(item => {
+                        const paper = item.paper;
+                        const similarity = (item.similarity * 100).toFixed(1);
+                        let url = paper.url;
+                        if (!url.startsWith('http')) {
+                            const paperId = url.split('/').pop();
+                            url = `https://arxiv.org/abs/${paperId}`;
+                        }
+
+                        html += '<li class="paper-item">';
+                        html += `<div class="paper-title"><a href="${url}" target="_blank">${escapeHtml(paper.title)}</a> <strong>(${similarity}% match)</strong></div>`;
+                        html += `<div class="paper-meta">Published: ${paper.published || 'Unknown'}</div>`;
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = '<div class="empty">No similar papers found above the threshold.</div>';
+                }
+            } catch (error) {
+                contentEl.innerHTML = `<div class="empty">Error: ${error.message}</div>`;
+            }
+        }
+
+        let chatSessionId = null;
+        let chatPapers = [];
+
+        async function askChatQuestion() {
+            const inputEl = document.getElementById('chatInput');
+            const question = inputEl.value.trim();
+
+            if (!question) return;
+
+            const messagesEl = document.getElementById('chatMessages');
+
+            messagesEl.innerHTML += `
+                <div class="chat-message user">
+                    <div class="message-bubble">${escapeHtml(question)}</div>
+                </div>
+            `;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            inputEl.value = '';
+
+            if (!chatSessionId) {
+                try {
+                    const papersResponse = await fetch(`${API_BASE}/api/papers`);
+                    const papersData = await papersResponse.json();
+                    chatPapers = papersData.papers || [];
+
+                    if (chatPapers.length === 0) {
+                        // Papers not prepared yet - show helpful message
+                        messagesEl.innerHTML += `
+                            <div class="chat-message">
+                                <div class="message-bubble" style="background: #fffbcc; border: 2px solid #fc3;">
+                                    ⚠️ Papers aren't ready yet!<br><br>
+                                    You need to prepare your papers first. Click the button below to start:
+                                </div>
+                            </div>
+                            <div style="text-align: center; margin: 1em 0;">
+                                <button class="button button-primary" onclick="preparePapersForChat()" style="font-size: 1.1em; padding: 0.8em 1.5em;">
+                                    🚀 Prepare Papers Now
+                                </button>
+                            </div>
+                        `;
+                        inputEl.value = question; // Put the question back
+                        return;
+                    }
+                } catch (error) {
+                    messagesEl.innerHTML += `<div class="chat-message"><div class="message-bubble">Error: ${error.message}</div></div>`;
+                    return;
+                }
+            }
+
+            messagesEl.innerHTML += `
+                <div class="chat-message">
+                    <div class="message-bubble">Thinking...</div>
+                </div>
+            `;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/summarize-structured`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ abstract: question })
+                });
+
+                const data = await response.json();
+                const lastMessage = messagesEl.lastElementChild;
+                lastMessage.innerHTML = `<div class="message-bubble">${escapeHtml(data.analysis?.problem_statement || data.analysis || 'No response available.')}</div>`;
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            } catch (error) {
+                const lastMessage = messagesEl.lastElementChild;
+                lastMessage.innerHTML = `<div class="message-bubble">Error: ${error.message}</div>`;
+            }
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                askChatQuestion();
+            }
+        }
+
+        async function loadHealth() {
+            const contentEl = document.getElementById('healthContent');
+            contentEl.innerHTML = '<div class="loading">Loading health status...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                const statusText = data.status === 'healthy' ? 'Healthy' : 'Warning';
+
+                contentEl.innerHTML = `
+                    <div class="section">
+                        <div class="section-title">System Status</div>
+                        <table class="health-table">
+                            <tr>
+                                <th>Component</th>
+                                <th>Status</th>
+                            </tr>
+                            <tr>
+                                <td>Overall Status</td>
+                                <td>${statusText}</td>
+                            </tr>
+                            <tr>
+                                <td>Gemini API Key</td>
+                                <td>${data.gemini_api_key_set ? '✓ Set' : '✗ Not Set'}</td>
+                            </tr>
+                            <tr>
+                                <td>Default Model</td>
+                                <td>${data.default_model || 'Not set'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">Available Features</div>
+                        <div class="info-box">
+                            <strong>PDF Processing:</strong> Analyze full research papers using Gemini File API<br><br>
+                            <strong>Structured Output:</strong> Get JSON-formatted analyses with Pydantic schemas<br><br>
+                            <strong>Context Caching:</strong> ~75% cost savings on repeated queries<br><br>
+                            <strong>Multi-Paper Analysis:</strong> Compare multiple papers in single request<br><br>
+                            <strong>Semantic Search:</strong> Embedding-based paper similarity search<br><br>
+                            <strong>Interactive Chat:</strong> Multi-turn conversations about papers
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                contentEl.innerHTML = `<div class="empty">Error loading health: ${error.message}</div>`;
+            }
+        }
+
+        function switchTab(tabName) {
+            console.group('🔀 Switch Tab');
+            console.log('Switching to tab:', tabName);
+
+            // Update hash without triggering scroll
+            if (history.pushState) {
+                history.pushState(null, null, `#${tabName}`);
+            } else {
+                location.hash = `#${tabName}`;
+            }
+
+            // Hide search results div and search bar section
+            const searchResults = document.getElementById('searchResults');
+            const searchSection = searchResults.previousElementSibling; // The search bar section
+
+            console.log('Search results element:', searchResults);
+            console.log('Current display:', searchResults.style.display);
+
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+
+            // Hide search when showing a tab, show search when on main page
+            if (tabName && tabName !== 'search') {
+                console.log('Hiding search results');
+                searchResults.style.display = 'none';
+                if (searchSection) searchSection.style.display = 'none';
+            } else {
+                console.log('Showing search results');
+                searchResults.style.display = 'block';
+                if (searchSection) searchSection.style.display = 'block';
+            }
+
+            // Activate the selected tab
+            const activeTab = document.querySelector(`.tab[onclick*="${tabName}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+                console.log('Activated tab button');
+            }
+
+            const activeNavLink = document.querySelector(`.nav-link[data-tab="${tabName}"]`);
+            if (activeNavLink) {
+                activeNavLink.classList.add('active');
+                console.log('Activated nav link');
+            }
+
+            const activeHeaderLink = document.querySelector(`.nav-links a[href="#${tabName}"]`);
+            if (activeHeaderLink) {
+                activeHeaderLink.classList.add('active');
+                console.log('Activated header link');
+            }
+
+            const tabElement = document.getElementById(`${tabName}Tab`);
+            if (tabElement) {
+                tabElement.classList.add('active');
+                console.log('Activated tab content');
+            }
+
+            // Load content based on tab
+            if (tabName === 'briefing') {
+                console.log('Loading briefing content...');
+                loadBriefing();
+            } else if (tabName === 'health') {
+                console.log('Loading health content...');
+                loadHealth();
+            } else if (tabName === 'papers') {
+                console.log('Loading papers content...');
+                loadPapers();
+            } else if (tabName === 'chat') {
+                console.log('Chat tab selected');
+            } else if (tabName === 'analysis') {
+                console.log('Analysis tab selected');
+            } else if (tabName === 'config') {
+                console.log('Config tab selected');
+            }
+
+            console.log('✅ Tab switch complete');
+            console.groupEnd();
+        }
+
+        function showSearch() {
+            console.group('🏠 Show Search Page');
+
+            // Show search results and search bar
+            const searchResults = document.getElementById('searchResults');
+            const searchSection = searchResults.previousElementSibling;
+
+            console.log('Showing search page');
+            searchResults.style.display = 'block';
+            if (searchSection) {
+                searchSection.style.display = 'block';
+            }
+            console.log('Search results display:', searchResults.style.display);
+
+            // Hide all tabs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+
+            if (history.pushState) {
+                history.pushState(null, null, '/');
+            }
+
+            // Restore last search results if available
+            if (lastSearchQuery && searchCache[lastSearchQuery]) {
+                console.log('💾 Restoring cached results for:', lastSearchQuery);
+                console.log('   Papers in cache:', searchCache[lastSearchQuery].length);
+                displaySearchResults(searchCache[lastSearchQuery]);
+            } else {
+                console.log('No cached results to restore');
+            }
+
+            console.log('✅ Search page shown');
+            console.groupEnd();
+        }
+
+        function showHelp() {
+            const helpContent = `
+                <div class="section">
+                    <div class="section-title">Help &amp; User Guide</div>
+                    <div class="info-box">
+                        <div class="info-box-title">Getting Started</div>
+                        <ol style="margin-left: 1.5em; margin-top: 0.5em;">
+                            <li>Enter a search query (e.g., "cat:cs.AI" or "transformer networks")</li>
+                            <li>Set the number of papers to fetch (default: 10)</li>
+                            <li>Select options like PDF Processing, Structured Output, etc.</li>
+                            <li>Click "Summarize Papers" to fetch and analyze papers</li>
+                        </ol>
+                    </div>
+                    <div class="info-box" style="margin-top: 1em;">
+                        <div class="info-box-title">Features</div>
+                        <ul style="margin-left: 1.5em; margin-top: 0.5em;">
+                            <li><strong>PDF Processing:</strong> Analyzes full paper content, not just abstracts</li>
+                            <li><strong>Structured Output:</strong> Returns JSON-formatted analysis with schema validation</li>
+                            <li><strong>Context Caching:</strong> Saves ~75% on costs for repeated queries</li>
+                            <li><strong>Multi-Paper Analysis:</strong> Compares multiple papers in a single request</li>
+                            <li><strong>Semantic Search:</strong> Finds similar papers using embedding similarity</li>
+                            <li><strong>Interactive Chat:</strong> Ask questions about your papers</li>
+                        </ul>
+                    </div>
+                    <div class="info-box" style="margin-top: 1em;">
+                        <div class="info-box-title">Navigation</div>
+                        <ul style="margin-left: 1.5em; margin-top: 0.5em;">
+                            <li>Use the header links or sidebar to navigate between sections</li>
+                            <li>URL hashes (e.g., #papers) allow direct linking to sections</li>
+                            <li>Quick Actions in the sidebar provide fast access to common tasks</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+
+            // Create a temporary modal or replace content
+            const currentTab = document.querySelector('.tab-content.active');
+            if (currentTab) {
+                const originalContent = currentTab.innerHTML;
+                currentTab.innerHTML = helpContent;
+
+                // Add back button
+                const backButton = document.createElement('button');
+                backButton.className = 'button button-primary';
+                backButton.textContent = 'Back';
+                backButton.onclick = () => {
+                    currentTab.innerHTML = originalContent;
+                    loadPapers();
+                };
+                currentTab.querySelector('.section').insertBefore(backButton, currentTab.querySelector('.section').firstChild);
+
+                switchTab('papers');
+                setTimeout(() => {
+                    document.getElementById('papersTab').innerHTML = helpContent;
+                }, 100);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Removed similarity threshold event listener since that tab was removed
+
+        // Handle hash-based routing
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash && ['papers', 'briefing', 'analysis', 'chat', 'config', 'health'].includes(hash)) {
+                switchTab(hash);
+            } else {
+                showSearch();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            console.group('🚀 Page Load Initialization');
+            console.log('API Base:', API_BASE);
+            console.log('Max Selected Papers:', MAX_SELECTED_PAPERS);
+
+            // Initialize selected papers counter
+            console.log('📦 Loading selected papers from localStorage...');
+            console.log('Selected Papers:', selectedPapers);
+            updateSelectedCounter();
+            console.log('✅ Counter updated');
+
+            // Check for hash on page load
+            const hash = window.location.hash.slice(1);
+            console.log('URL Hash:', hash || '(none)');
+
+            if (hash && ['papers', 'briefing', 'analysis', 'chat', 'config', 'health'].includes(hash)) {
+                console.log(`Switching to tab: ${hash}`);
+                switchTab(hash);
+            } else {
+                console.log('Showing search view (default)');
+                showSearch();
+
+                // If there are cached results, show them automatically
+                if (lastSearchQuery && searchCache[lastSearchQuery] && searchCache[lastSearchQuery].length > 0) {
+                    console.log('🔄 Auto-restoring last search results');
+                    console.log('   Query:', lastSearchQuery);
+                    console.log('   Results:', searchCache[lastSearchQuery].length);
+                }
+            }
+
+            console.log('Loading health status...');
+            loadHealth();
+
+            // Enable Enter key for search
+            const searchInput = document.getElementById('arxivSearchQuery');
+            console.log('Search input element:', searchInput);
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('⌨️ Enter key pressed, triggering search');
+                    searchArxiv();
+                }
+            });
+            console.log('✅ Enter key handler attached');
+
+            // Focus on search box
+            searchInput.focus();
+            console.log('✅ Search box focused');
+
+            // Log environment info
+            console.group('🌐 Environment Info');
+            console.log('User Agent:', navigator.userAgent);
+            console.log('Window Size:', `${window.innerWidth}x${window.innerHeight}`);
+            console.log('Screen Size:', `${screen.width}x${screen.height}`);
+            console.log('Color Depth:', screen.colorDepth);
+            console.log('Pixel Ratio:', window.devicePixelRatio);
+            console.groupEnd();
+
+            console.log('✅ Initialization Complete');
+            console.groupEnd();
+
+            // Log available global functions for debugging
+            console.group('🔧 Available Functions');
+            console.log('Search:', typeof searchArxiv);
+            console.log('Display Results:', typeof displaySearchResults);
+            console.log('Toggle Selection:', typeof togglePaperSelection);
+            console.log('View Paper Detail:', typeof viewPaperDetail);
+            console.log('Chat with Selected:', typeof chatWithSelected);
+            console.groupEnd();
+        });
+    </script>
+</body>
+</html>
