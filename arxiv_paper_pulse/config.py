@@ -16,6 +16,9 @@ GAME_OUTPUT_DIR = "arxiv_paper_pulse/data/self_generated_games"
 ARTICLE_OUTPUT_DIR = "arxiv_paper_pulse/data/articles"
 BOT_WORKING_DIR = "arxiv_paper_pulse/data/bots"
 BEEHIIV_DATA_DIR = "arxiv_paper_pulse/data/beehiiv"
+BEEHIIV_POLL_INTERVAL = int(os.getenv("BEEHIIV_POLL_INTERVAL", "3600"))  # Default: 1 hour
+BEEHIIV_AUTO_POLL = os.getenv("BEEHIIV_AUTO_POLL", "false").lower() == "true"
+BEEHIIV_FEEDS = os.getenv("BEEHIIV_FEEDS", "").split(",") if os.getenv("BEEHIIV_FEEDS") else []  # Comma-separated feed URLs
 CONTEXT_MAX_BYTES = int(os.getenv("CONTEXT_MAX_BYTES", str(65536)))  # 64KB default
 CONTEXT_HISTORY_RETENTION = int(os.getenv("CONTEXT_HISTORY_RETENTION", "20"))
 CONTEXT_HISTORY_DIRNAME = "context_history"

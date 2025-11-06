@@ -53,7 +53,7 @@ def main():
             print(f"  Link: {feed_info['link']}")
             print(f"  Articles: {feed_info['article_count']}")
             print()
-            
+
             if feed_info['article_count'] > 0:
                 feed_data = reader.fetch_feed()
                 print(f"Fetched {len(feed_data['articles'])} articles")
@@ -63,7 +63,7 @@ def main():
                     print(f"   Published: {article['published']}")
                     print(f"   Link: {article['link']}")
                     print()
-            
+
             print("=" * 80)
             print("✅ Feed fetched successfully!")
             print("=" * 80)

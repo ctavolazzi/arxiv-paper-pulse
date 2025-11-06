@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -6,6 +6,8 @@ from pathlib import Path
 import json
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import threading
+import time
 from .core import ArxivSummarizer
 from . import config
 from .utils import get_total_available
@@ -36,6 +38,51 @@ if frontend_dir.exists():
 
 # Global summarizer instance (will be initialized per request with parameters)
 summarizer_cache = {}
+
+# Beehiiv polling state
+_beehiiv_polling_active = False
+_beehiiv_polling_thread = None
+
+def _poll_beehiiv_feeds():
+    """Background function to poll Beehiiv feeds periodically."""
+    while _beehiiv_polling_active:
+        try:
+            feeds = [f.strip() for f in config.BEEHIIV_FEEDS if f.strip()]
+            if not feeds:
+                time.sleep(config.BEEHIIV_POLL_INTERVAL)
+                continue
+
+            for feed_url in feeds:
+                try:
+                    reader = BeehiivReader(feed_url)
+                    feed_data = reader.fetch_feed()
+                    print(f"✅ Polled feed: {feed_data['title']} - {len(feed_data['articles'])} articles")
+                except Exception as e:
+                    print(f"❌ Error polling feed {feed_url}: {e}")
+
+        except Exception as e:
+            print(f"❌ Error in polling loop: {e}")
+
+        time.sleep(config.BEEHIIV_POLL_INTERVAL)
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background tasks on API startup."""
+    global _beehiiv_polling_active, _beehiiv_polling_thread
+
+    if config.BEEHIIV_AUTO_POLL and config.BEEHIIV_FEEDS:
+        _beehiiv_polling_active = True
+        _beehiiv_polling_thread = threading.Thread(target=_poll_beehiiv_feeds, daemon=True)
+        _beehiiv_polling_thread.start()
+        feeds_list = ", ".join(config.BEEHIIV_FEEDS)
+        print(f"🔄 Started automatic Beehiiv polling (interval: {config.BEEHIIV_POLL_INTERVAL}s)")
+        print(f"   Monitoring feeds: {feeds_list}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background tasks on API shutdown."""
+    global _beehiiv_polling_active
+    _beehiiv_polling_active = False
 
 def get_summarizer(max_results=10, query="cat:cs.AI", model=None):
     """Get or create summarizer instance"""
@@ -432,7 +479,7 @@ async def get_article(article_name: str):
 async def fetch_beehiiv_feed(request: dict):
     """
     Fetch and return Beehiiv RSS feed data.
-    
+
     Request body:
         feed_url: RSS feed URL
         force_refresh: If True, fetch fresh data without saving
@@ -441,7 +488,7 @@ async def fetch_beehiiv_feed(request: dict):
         feed_url = request.get("feed_url")
         if not feed_url:
             raise HTTPException(status_code=400, detail="feed_url is required")
-        
+
         force_refresh = request.get("force_refresh", False)
         reader = BeehiivReader(feed_url)
         feed_data = reader.fetch_feed(force_refresh=force_refresh)
@@ -456,7 +503,7 @@ async def fetch_beehiiv_feed(request: dict):
 async def get_beehiiv_feed_info(request: dict):
     """
     Get feed metadata without fetching full articles.
-    
+
     Request body:
         feed_url: RSS feed URL
     """
@@ -464,7 +511,7 @@ async def get_beehiiv_feed_info(request: dict):
         feed_url = request.get("feed_url")
         if not feed_url:
             raise HTTPException(status_code=400, detail="feed_url is required")
-        
+
         reader = BeehiivReader(feed_url)
         feed_info = reader.get_feed_info()
         return feed_info
@@ -478,16 +525,16 @@ async def get_beehiiv_feed_info(request: dict):
 async def get_beehiiv_articles(limit: Optional[int] = None):
     """
     Get all stored Beehiiv articles.
-    
+
     Args:
         limit: Maximum number of articles to return
     """
     try:
         articles = get_stored_articles()
-        
+
         if limit:
             articles = articles[:limit]
-        
+
         return {
             "articles": articles,
             "count": len(articles)
@@ -500,7 +547,7 @@ async def get_beehiiv_articles(limit: Optional[int] = None):
 async def get_beehiiv_article(article_id: str, feed_url: str = None):
     """
     Get a specific Beehiiv article by ID.
-    
+
     Args:
         article_id: Article ID or link
         feed_url: Optional feed URL to search in
@@ -515,15 +562,73 @@ async def get_beehiiv_article(article_id: str, feed_url: str = None):
             # Search in all stored articles
             articles = get_stored_articles()
             article = next((a for a in articles if a.get("id") == article_id or a.get("link") == article_id), None)
-        
+
         if not article:
             raise HTTPException(status_code=404, detail="Article not found")
-        
+
         return article
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching article: {str(e)}")
+
+
+@app.post("/api/beehiiv/polling/start")
+async def start_beehiiv_polling(request: dict):
+    """
+    Start automatic polling for Beehiiv feeds.
+
+    Request body:
+        feed_urls: List of feed URLs to poll
+        interval: Polling interval in seconds (default: 3600)
+    """
+    global _beehiiv_polling_active, _beehiiv_polling_thread
+
+    if _beehiiv_polling_active:
+        return {"status": "already_running", "message": "Polling is already active"}
+
+    feed_urls = request.get("feed_urls", [])
+    interval = request.get("interval", config.BEEHIIV_POLL_INTERVAL)
+
+    if not feed_urls:
+        raise HTTPException(status_code=400, detail="feed_urls is required")
+
+    # Update config temporarily
+    config.BEEHIIV_FEEDS = feed_urls
+    config.BEEHIIV_POLL_INTERVAL = interval
+
+    _beehiiv_polling_active = True
+    _beehiiv_polling_thread = threading.Thread(target=_poll_beehiiv_feeds, daemon=True)
+    _beehiiv_polling_thread.start()
+
+    return {
+        "status": "started",
+        "feeds": feed_urls,
+        "interval": interval
+    }
+
+
+@app.post("/api/beehiiv/polling/stop")
+async def stop_beehiiv_polling():
+    """Stop automatic polling for Beehiiv feeds."""
+    global _beehiiv_polling_active
+
+    if not _beehiiv_polling_active:
+        return {"status": "not_running", "message": "Polling is not active"}
+
+    _beehiiv_polling_active = False
+
+    return {"status": "stopped"}
+
+
+@app.get("/api/beehiiv/polling/status")
+async def get_beehiiv_polling_status():
+    """Get status of automatic polling."""
+    return {
+        "active": _beehiiv_polling_active,
+        "feeds": config.BEEHIIV_FEEDS if _beehiiv_polling_active else [],
+        "interval": config.BEEHIIV_POLL_INTERVAL if _beehiiv_polling_active else None
+    }
 
 
 @app.post("/api/generate-self-playing-game")
