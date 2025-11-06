@@ -14,6 +14,11 @@ IMAGE_OUTPUT_DIR = "arxiv_paper_pulse/data/generated_images"
 IMAGE_API_LOG_DIR = "arxiv_paper_pulse/data/api_logs"
 GAME_OUTPUT_DIR = "arxiv_paper_pulse/data/self_generated_games"
 ARTICLE_OUTPUT_DIR = "arxiv_paper_pulse/data/articles"
+BOT_WORKING_DIR = "arxiv_paper_pulse/data/bots"
+BEEHIIV_DATA_DIR = "arxiv_paper_pulse/data/beehiiv"
+CONTEXT_MAX_BYTES = int(os.getenv("CONTEXT_MAX_BYTES", str(65536)))  # 64KB default
+CONTEXT_HISTORY_RETENTION = int(os.getenv("CONTEXT_HISTORY_RETENTION", "20"))
+CONTEXT_HISTORY_DIRNAME = "context_history"
 
 # Feature flags for Gemini API capabilities
 USE_PDF_PROCESSING = os.getenv("USE_PDF_PROCESSING", "false").lower() == "true"

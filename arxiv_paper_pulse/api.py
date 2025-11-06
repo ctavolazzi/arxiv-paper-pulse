@@ -14,6 +14,8 @@ from .batch_processor import BatchPaperProcessor
 from .embeddings import PaperEmbeddings
 from .image_generator import ImageGenerator
 from .self_playing_game import SelfDesigningGame
+from .article_generator import generate_article
+from .beehiiv_reader import BeehiivReader, get_stored_articles
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -335,6 +337,193 @@ async def generate_image(request: dict):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate-article")
+async def generate_article_endpoint(request: dict):
+    """
+    Generate article from arXiv paper.
+
+    Request body:
+    {
+        "paper_id": "1706.03762" or "https://arxiv.org/abs/1706.03762",
+        "output_format": "docx" or "md" (default: "docx")
+    }
+    """
+    paper_id = request.get("paper_id")
+    if not paper_id:
+        raise HTTPException(status_code=400, detail="paper_id is required")
+
+    output_format = request.get("output_format", "docx")
+    if output_format not in ["docx", "md"]:
+        raise HTTPException(status_code=400, detail="output_format must be 'docx' or 'md'")
+
+    try:
+        result_path = generate_article(paper_id, output_format=output_format)
+
+        return {
+            "success": True,
+            "article_path": result_path,
+            "paper_id": paper_id,
+            "output_format": output_format,
+            "file_exists": Path(result_path).exists(),
+            "file_size": Path(result_path).stat().st_size if Path(result_path).exists() else 0
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/articles")
+async def list_articles():
+    """List all generated articles with metadata."""
+    article_dir = Path(config.ARTICLE_OUTPUT_DIR)
+    if not article_dir.exists():
+        return {"articles": []}
+
+    articles = []
+    for article_file in sorted(article_dir.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True):
+        articles.append({
+            "name": article_file.name,
+            "path": str(article_file),
+            "size": article_file.stat().st_size,
+            "modified": article_file.stat().st_mtime,
+            "format": "md"
+        })
+
+    for article_file in sorted(article_dir.glob("*.docx"), key=lambda x: x.stat().st_mtime, reverse=True):
+        articles.append({
+            "name": article_file.name,
+            "path": str(article_file),
+            "size": article_file.stat().st_size,
+            "modified": article_file.stat().st_mtime,
+            "format": "docx"
+        })
+
+    # Sort by modified time
+    articles.sort(key=lambda x: x["modified"], reverse=True)
+
+    return {
+        "articles": articles,
+        "count": len(articles)
+    }
+
+
+@app.get("/api/articles/{article_name}")
+async def get_article(article_name: str):
+    """Get specific article file."""
+    article_dir = Path(config.ARTICLE_OUTPUT_DIR)
+    article_path = article_dir / article_name
+
+    if not article_path.exists():
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    if article_path.suffix == ".md":
+        return FileResponse(str(article_path), media_type="text/markdown")
+    elif article_path.suffix == ".docx":
+        return FileResponse(str(article_path), media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file format")
+
+
+# Beehiiv RSS Feed Endpoints
+@app.post("/api/beehiiv/feeds")
+async def fetch_beehiiv_feed(request: dict):
+    """
+    Fetch and return Beehiiv RSS feed data.
+    
+    Request body:
+        feed_url: RSS feed URL
+        force_refresh: If True, fetch fresh data without saving
+    """
+    try:
+        feed_url = request.get("feed_url")
+        if not feed_url:
+            raise HTTPException(status_code=400, detail="feed_url is required")
+        
+        force_refresh = request.get("force_refresh", False)
+        reader = BeehiivReader(feed_url)
+        feed_data = reader.fetch_feed(force_refresh=force_refresh)
+        return feed_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching feed: {str(e)}")
+
+
+@app.post("/api/beehiiv/feed-info")
+async def get_beehiiv_feed_info(request: dict):
+    """
+    Get feed metadata without fetching full articles.
+    
+    Request body:
+        feed_url: RSS feed URL
+    """
+    try:
+        feed_url = request.get("feed_url")
+        if not feed_url:
+            raise HTTPException(status_code=400, detail="feed_url is required")
+        
+        reader = BeehiivReader(feed_url)
+        feed_info = reader.get_feed_info()
+        return feed_info
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching feed info: {str(e)}")
+
+
+@app.get("/api/beehiiv/articles")
+async def get_beehiiv_articles(limit: Optional[int] = None):
+    """
+    Get all stored Beehiiv articles.
+    
+    Args:
+        limit: Maximum number of articles to return
+    """
+    try:
+        articles = get_stored_articles()
+        
+        if limit:
+            articles = articles[:limit]
+        
+        return {
+            "articles": articles,
+            "count": len(articles)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching articles: {str(e)}")
+
+
+@app.get("/api/beehiiv/articles/{article_id}")
+async def get_beehiiv_article(article_id: str, feed_url: str = None):
+    """
+    Get a specific Beehiiv article by ID.
+    
+    Args:
+        article_id: Article ID or link
+        feed_url: Optional feed URL to search in
+    """
+    try:
+        if feed_url:
+            import urllib.parse
+            decoded_url = urllib.parse.unquote(feed_url) if feed_url.startswith("http") else feed_url
+            reader = BeehiivReader(decoded_url)
+            article = reader.get_article_by_id(article_id)
+        else:
+            # Search in all stored articles
+            articles = get_stored_articles()
+            article = next((a for a in articles if a.get("id") == article_id or a.get("link") == article_id), None)
+        
+        if not article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        
+        return article
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching article: {str(e)}")
 
 
 @app.post("/api/generate-self-playing-game")

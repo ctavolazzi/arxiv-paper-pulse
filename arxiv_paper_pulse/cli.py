@@ -26,7 +26,83 @@ def main():
                        default="executive", help="Briefing format style")
     parser.add_argument("--streaming", action="store_true", help="Use streaming responses")
 
+    # Article generation
+    parser.add_argument("--generate-article", type=str, metavar="PAPER_ID", help="Generate article from arXiv paper ID or URL")
+    parser.add_argument("--article-format", type=str, choices=["docx", "md"], default="docx", help="Article output format (default: docx)")
+
+    # Beehiiv RSS feed
+    parser.add_argument("--beehiiv-feed", type=str, metavar="FEED_URL", help="Fetch Beehiiv RSS feed")
+
     args = parser.parse_args()
+
+    # Handle Beehiiv feed fetching
+    if args.beehiiv_feed:
+        from .beehiiv_reader import BeehiivReader
+        print("=" * 80)
+        print("Beehiiv RSS Feed Reader")
+        print("=" * 80)
+        print()
+        print(f"Feed URL: {args.beehiiv_feed}")
+        print()
+        try:
+            reader = BeehiivReader(args.beehiiv_feed)
+            feed_info = reader.get_feed_info()
+            print("Feed Information:")
+            print(f"  Title: {feed_info['title']}")
+            print(f"  Description: {feed_info['description']}")
+            print(f"  Link: {feed_info['link']}")
+            print(f"  Articles: {feed_info['article_count']}")
+            print()
+            
+            if feed_info['article_count'] > 0:
+                feed_data = reader.fetch_feed()
+                print(f"Fetched {len(feed_data['articles'])} articles")
+                print()
+                for i, article in enumerate(feed_data['articles'], 1):
+                    print(f"{i}. {article['title']}")
+                    print(f"   Published: {article['published']}")
+                    print(f"   Link: {article['link']}")
+                    print()
+            
+            print("=" * 80)
+            print("✅ Feed fetched successfully!")
+            print("=" * 80)
+            return
+        except Exception as e:
+            print()
+            print("=" * 80)
+            print(f"❌ Error: {e}")
+            print("=" * 80)
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+
+    # Handle article generation
+    if args.generate_article:
+        from .article_generator import generate_article
+        print("=" * 80)
+        print("Article Generator")
+        print("=" * 80)
+        print()
+        print(f"Paper: {args.generate_article}")
+        print(f"Format: {args.article_format}")
+        print()
+        try:
+            result = generate_article(args.generate_article, output_format=args.article_format)
+            print()
+            print("=" * 80)
+            print(f"✅ Article generated successfully!")
+            print(f"   Output: {result}")
+            print("=" * 80)
+            return
+        except Exception as e:
+            print()
+            print("=" * 80)
+            print(f"❌ Error: {e}")
+            print("=" * 80)
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
 
     # Prompt for a search query if not provided via command-line.
     if args.query is None:
@@ -172,5 +248,50 @@ def main():
             format_type=args.briefing_format
         )
 
+
+def main_article(args=None):
+    """CLI entry point for article generation."""
+    parser = argparse.ArgumentParser(
+        description="Generate article from arXiv paper"
+    )
+    parser.add_argument("paper_id", type=str, help="arXiv paper ID or URL")
+    parser.add_argument("--format", type=str, choices=["docx", "md"], default="docx", help="Output format (default: docx)")
+    parser.add_argument("--output", type=str, help="Output file path (optional)")
+
+    parsed_args = parser.parse_args(args)
+
+    from .article_generator import generate_article
+
+    print("=" * 80)
+    print("Article Generator")
+    print("=" * 80)
+    print()
+    print(f"Paper: {parsed_args.paper_id}")
+    print(f"Format: {parsed_args.format}")
+    print()
+
+    try:
+        result = generate_article(parsed_args.paper_id, output_format=parsed_args.format)
+        print()
+        print("=" * 80)
+        print(f"✅ Article generated successfully!")
+        print(f"   Output: {result}")
+        print("=" * 80)
+        return 0
+    except Exception as e:
+        print()
+        print("=" * 80)
+        print(f"❌ Error: {e}")
+        print("=" * 80)
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "article":
+        sys.argv.pop(1)  # Remove "article" from argv
+        sys.exit(main_article())
+    else:
+        main()
