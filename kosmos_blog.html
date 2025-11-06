@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kosmos: An AI Scientist for Autonomous Discovery | ArXiv Paper Pulse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --text: #1a1a1a;
+            --text-light: #4a5568;
+            --text-lighter: #718096;
+            --bg: #ffffff;
+            --bg-light: #f7fafc;
+            --bg-lighter: #edf2f7;
+            --border: #e2e8f0;
+            --accent: #f6ad55;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.75;
+            color: var(--text);
+            background: var(--bg-light);
+            font-size: 18px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 4rem 0 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.95;
+            margin-top: 1.5rem;
+        }
+
+        .header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .article-wrapper {
+            background: var(--bg);
+            margin-top: -2rem;
+            border-radius: 16px 16px 0 0;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            z-index: 10;
+        }
+
+        .article-card {
+            padding: 4rem 4rem 5rem 4rem;
+        }
+
+        /* Hero Image */
+        .hero-image-container {
+            width: calc(100% + 8rem);
+            margin: -2rem -4rem 4rem -4rem;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .hero-image:hover {
+            transform: scale(1.03);
+        }
+
+        .hero-image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+            padding: 3rem 4rem 2rem;
+            color: white;
+            pointer-events: none;
+        }
+
+        .hero-image-overlay h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            border: none;
+            padding: 0;
+            color: white;
+        }
+
+        /* Typography */
+        .article-content {
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 1.25rem;
+            line-height: 1.9;
+            color: var(--text);
+        }
+
+        h2 {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin: 3.5rem 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem 0;
+            letter-spacing: -0.01em;
+        }
+
+        h4 {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-light);
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem 0;
+        }
+
+        p {
+            margin: 1.5rem 0;
+            color: var(--text);
+            font-size: 1.25rem;
+            line-height: 1.9;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 2rem 0;
+            padding-left: 2.5rem;
+        }
+
+        li {
+            margin: 1rem 0;
+            line-height: 1.9;
+            color: var(--text);
+        }
+
+        ul li::marker {
+            color: var(--primary);
+        }
+
+        /* Emphasis */
+        strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        em {
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Metadata Box */
+        .metadata-box {
+            background: var(--bg-lighter);
+            border-left: 4px solid var(--primary);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 3rem 0;
+        }
+
+        .metadata-box p {
+            margin: 0.75rem 0;
+            color: var(--text-light);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .metadata-box strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff5e0 100%);
+            border-left: 4px solid var(--accent);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2.5rem 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .highlight-box strong {
+            color: #c05621;
+        }
+
+        /* Discovery Items */
+        .discovery-item {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            padding: 1.75rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .discovery-item:hover {
+            background: #f0f4ff;
+            transform: translateX(8px);
+            box-shadow: var(--shadow);
+        }
+
+        .discovery-item strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.75rem;
+            font-size: 1.15rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .discovery-item p {
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        /* Section Dividers */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            margin: 4rem 0;
+        }
+
+        /* References */
+        .references {
+            background: var(--bg-light);
+            padding: 2.5rem;
+            border-radius: 12px;
+            margin-top: 4rem;
+            border: 1px solid var(--border);
+        }
+
+        .references h3 {
+            margin-top: 0;
+        }
+
+        .references ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .references li {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+        }
+
+        .references li:last-child {
+            border-bottom: none;
+        }
+
+        /* Scroll to Top Button */
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .scroll-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .scroll-top.show {
+            display: flex;
+        }
+
+        /* Reading Progress Bar */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .article-card {
+                padding: 3rem 2.5rem 4rem 2.5rem;
+            }
+
+            .hero-image-container {
+                width: calc(100% + 5rem);
+                margin: -2rem -2.5rem 3rem -2.5rem;
+            }
+
+            .header-content {
+                padding: 0 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 3rem 0 2rem 0;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .article-card {
+                padding: 2.5rem 2rem 3.5rem 2rem;
+            }
+
+            .article-content {
+                font-size: 1.15rem;
+            }
+
+            h2 {
+                font-size: 1.85rem;
+            }
+
+            h3 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1.15rem;
+            }
+
+            .hero-image-container {
+                width: calc(100% + 4rem);
+                margin: -2rem -2rem 2.5rem -2rem;
+            }
+
+            .header-meta {
+                gap: 1.5rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .article-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Selection */
+        ::selection {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Kosmos: An AI Scientist for Autonomous Discovery</h1>
+            <div class="header-meta">
+                <span>📅 November 4, 2025</span>
+                <span>📄 arXiv: 2511.02824</span>
+                <span>👥 37 Authors</span>
+                <span>🔬 AI Research</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="article-wrapper">
+            <article class="article-card">
+                <!-- Hero Image -->
+                <div class="hero-image-container">
+                    <img src="arxiv_paper_pulse/data/generated_images/article_hero_2511.02824_20251105_120354.png" alt="Kosmos AI Scientist - Visual Explanation" class="hero-image" onclick="window.open(this.src, '_blank')">
+                    <div class="hero-image-overlay">
+                        <h2>An autonomous AI system that performs scientific discovery</h2>
+                    </div>
+                </div>
+
+                <div class="article-content">
+                    <!-- Metadata -->
+                    <div class="metadata-box">
+                        <p><strong>Authors:</strong> Ludovico Mitchener, Angela Yiu, Benjamin Chang, Mathieu Bourdenx, Tyler Nadolski, Arvis Sulovari, Eric C. Landsness, Daniel L. Barabasi, Siddharth Narayanan, Nicky Evans, Shriya Reddy, Martha Foiani, Aizad Kamal, Leah P. Shriver, Fang Cao, Asmamaw T. Wassie, Jon M. Laurent, Edwin Melville-Green, Mayk Caldas, Albert Bou, Kaleigh F. Roberts, Sladjana Zagorac, Timothy C. Orr, Miranda E. Orr, Kevin J. Zwezdaryk, Ali E. Ghareeb, Laurie McCoy, Bruna Gomes, Euan A. Ashley, Karen E. Duff, Tonio Buonassisi, Tom Rainforth, Randall J. Bateman, Michael Skarlinski, Samuel G. Rodriques, Michaela M. Hinks, Andrew D. White</p>
+                        <p><strong>Original Paper:</strong> <a href="http://arxiv.org/abs/2511.02824v1" target="_blank">arXiv:2511.02824</a></p>
+                    </div>
+
+                    <!-- Abstract -->
+                    <h2>Abstract</h2>
+                    <p>The research paper "Kosmos: An AI Scientist for Autonomous Discovery" introduces a groundbreaking AI system designed to automate the scientific discovery process from start to finish. Kosmos addresses critical limitations in previous AI agents—namely, a lack of long-term coherence and analytical depth—by integrating a novel <strong>structured world model</strong> with parallel AI agent execution. In a typical run, Kosmos executes over 42,000 lines of code and reads 1,500 scientific papers, performing work equivalent to months of human expert research. The system demonstrated its power by making seven distinct discoveries across fields like metabolomics, materials science, statistical genetics, and neuroscience. These included reproducing unpublished findings, proposing novel mechanistic hypotheses, and identifying a completely new, clinically-relevant mechanism for neuronal vulnerability in aging. With high accuracy and fully traceable outputs, Kosmos represents a significant leap towards creating a scalable, autonomous, and reproducible engine for scientific advancement.</p>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Introduction -->
+                    <h2>Introduction</h2>
+                    <p>The dream of an AI that can function as an autonomous scientist, capable of sifting through vast datasets, formulating hypotheses, and uncovering novel insights, has long been a goal in the fields of artificial intelligence and scientific research. While recent AI agents have shown promise in automating specific tasks like literature reviews or data analysis, they often fall short in orchestrating a complete, end-to-end research project. Existing systems struggle to maintain a coherent line of inquiry over extended periods, leading to shallow findings and a failure to tackle complex, multi-step problems. This "coherence gap" has been a major barrier to realizing the full potential of AI in science.</p>
+
+                    <p>The paper by Ludovico Mitchener, Andrew D. White, and their extensive team of collaborators introduces <strong>Kosmos</strong>, a system designed to bridge this gap. Kosmos is not just a tool but an integrated "AI Scientist" that can take a high-level research objective and a dataset, and autonomously execute a comprehensive research campaign. By pioneering a new architecture centered on a shared knowledge base, Kosmos demonstrates the ability to conduct deep, sustained, and reproducible scientific discovery at a scale previously unattainable.</p>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Deep Analysis -->
+                    <h2>Deep Analysis</h2>
+
+                    <h3>The Challenge: Coherence and Depth in AI-Driven Science</h3>
+                    <p>Before Kosmos, AI agents in science faced several fundamental problems:</p>
+
+                    <div class="discovery-item">
+                        <strong>1. Limited Coherence</strong>
+                        <p>Agents often lost context between tasks. A finding from a data analysis step might not be effectively integrated into the subsequent literature search or hypothesis generation, leading to disjointed and inefficient research.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>2. Shallow Findings</strong>
+                        <p>Without a persistent memory or a structured understanding of the evolving research landscape, AI systems could not pursue the deep, iterative lines of questioning required for profound discoveries.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>3. Lack of Scalability</strong>
+                        <p>Managing hundreds of parallel tasks and sustaining a research project for the equivalent of several months was beyond the scope of existing frameworks.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>4. Poor Traceability</strong>
+                        <p>The reasoning behind an AI's conclusions was often opaque, making it difficult for human scientists to verify the findings or reproduce the results—a critical failure in the scientific method.</p>
+                    </div>
+
+                    <h3>The Kosmos Architecture: A Structured World Model for Coherent Discovery</h3>
+                    <p>Kosmos overcomes these challenges with an elegant and powerful architecture. The process begins when a human scientist provides an open-ended objective (e.g., "Identify the key drivers of performance in this solar cell dataset") and the relevant data.</p>
+
+                    <p>The system then operates in iterative cycles, typically lasting up to 12 hours each. In every cycle:</p>
+
+                    <ul>
+                        <li><strong>Parallel Agents are Deployed:</strong> Kosmos launches multiple instances of two specialized AI agents: a <strong>Data Analysis Agent</strong> that writes and executes Python code for statistical analysis, and a <strong>Literature Search Agent</strong> that queries databases and synthesizes information from scientific papers.</li>
+                        <li><strong>A Structured World Model Coordinates Everything:</strong> This is the core innovation of Kosmos. The world model acts as a central, dynamic knowledge base. It continuously ingests, organizes, and synthesizes the outputs from all parallel agents. This shared memory ensures that every agent is working from the same up-to-date understanding of the project, allowing Kosmos to maintain long-term coherence, avoid redundant work, and build upon previous findings in a logical sequence.</li>
+                        <li><strong>Scientific Reports are Generated:</strong> At the conclusion of its run, Kosmos produces detailed scientific reports. Critically, <strong>every statement, figure, and claim in the report is cited directly back to the code that generated it or the primary literature that supports it</strong>. This creates an unprecedented level of transparency and reproducibility.</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        <p><strong>Scale of Operation:</strong> A typical 20-cycle project involves over 200 agent rollouts, the execution of ~42,000 lines of code, and the analysis of 1,500 full-text research papers. External academic evaluators estimated that a single run performs work equivalent to <strong>6.14 months of a human researcher's time</strong>. Expert evaluation of its findings revealed an overall accuracy of 79.4%, with data analysis statements being 85.5% reproducible.</p>
+                    </div>
+
+                    <h3>Key Discoveries Across Diverse Scientific Fields</h3>
+                    <p>To validate its capabilities, Kosmos was deployed across seven distinct research problems, yielding remarkable results that ranged from reproducing existing work to making entirely novel discoveries.</p>
+
+                    <div class="discovery-item">
+                        <strong>1. Metabolomics (Neuroprotection)</strong>
+                        <p>Kosmos independently reproduced the key findings of an unpublished manuscript, identifying nucleotide metabolism as the central pathway in hypothermia-induced brain protection with near-perfect quantitative agreement (R²=0.998).</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>2. Materials Science (Perovskite Solar Cells)</strong>
+                        <p>It not only replicated the findings of a preprint—identifying humidity during thermal annealing as a critical factor—but also made a <strong>novel observation</strong> about the negative impact of a specific solvent, which was later validated by human experts.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>3. Neuroscience (Neuronal Networks)</strong>
+                        <p>It independently confirmed that the structure of neuronal networks follows log-normal distributions, supporting the theory that multiplicative biological processes drive their development.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>4. Statistical Genetics (Myocardial Fibrosis)</strong>
+                        <p>Kosmos identified the SOD2 protein as causally protective against myocardial fibrosis and proposed a <strong>novel mechanistic hypothesis</strong> for its regulation involving a microRNA binding site, advancing the field beyond prior correlational studies.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>5. Statistical Genetics (Type 2 Diabetes)</strong>
+                        <p>It developed a <strong>novel analytical method</strong> for ranking gene-SNP pairs and used it to propose a specific mechanism by which a protective genetic variant reduces diabetes risk.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>6. Proteomics (Alzheimer's Disease)</strong>
+                        <p>In another display of methodological innovation, Kosmos developed a new segmented regression technique to pinpoint the timing of extracellular matrix (ECM) collapse in Alzheimer's progression, suggesting it is a downstream consequence of tau accumulation.</p>
+                    </div>
+
+                    <div class="discovery-item">
+                        <strong>7. Neuroscience (Neuronal Aging)</strong>
+                        <p>Perhaps its most significant achievement, Kosmos made a <strong>completely novel, clinically-relevant discovery</strong> using a dataset that human researchers had already analyzed. It identified that the vulnerability of entorhinal cortex neurons in aging is driven by a widespread collapse of "flippase" enzymes. This leads to the exposure of "eat me" signals on the neuron surface, priming them for removal by microglia. This finding provides a new, elegant explanation for age-related vulnerability in a key brain region.</p>
+                    </div>
+
+                    <h3>Implications for the Future of Research</h3>
+                    <p>The success of Kosmos carries profound implications:</p>
+                    <ul>
+                        <li><strong>Acceleration of Science:</strong> By autonomously performing months of research in days, Kosmos can dramatically increase the pace of discovery.</li>
+                        <li><strong>Enhanced Reproducibility:</strong> Its rigorous, built-in citation system provides a gold standard for transparent and verifiable computational research.</li>
+                        <li><strong>Human-AI Collaboration:</strong> Kosmos is not a replacement for human scientists but a powerful partner. It handles the laborious data processing and initial exploration, freeing up human experts to focus on experimental validation, strategic direction, and interpreting the most promising findings.</li>
+                        <li><strong>Unbiased Exploration:</strong> Free from human cognitive biases, Kosmos can explore vast hypothesis spaces and uncover connections that might otherwise be overlooked.</li>
+                    </ul>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Conclusion -->
+                    <h2>Conclusion</h2>
+                    <p>"Kosmos: An AI Scientist for Autonomous Discovery" marks a pivotal moment in the application of AI to scientific research. By solving the critical challenge of long-term coherence through its structured world model, Kosmos has demonstrated that an AI can autonomously conduct complex, data-driven research that is not only scalable and reproducible but also capable of generating genuinely novel and valuable scientific insights.</p>
+                    <p>While the system has limitations, such as a lower accuracy in high-level interpretation and the need for human experts to vet its most valuable findings, it firmly establishes a new paradigm for human-AI collaboration. Kosmos is a powerful tool for augmenting human intellect, accelerating the cycle of discovery, and pushing the boundaries of what is knowable. It is one of the most compelling realizations to date of the AI scientist, and its continued development promises to reshape the landscape of scientific inquiry.</p>
+
+                    <!-- References -->
+                    <div class="references">
+                        <h3>References</h3>
+                        <ul>
+                            <li><strong>Paper Title:</strong> Kosmos: An AI Scientist for Autonomous Discovery</li>
+                            <li><strong>Authors:</strong> Ludovico Mitchener, Angela Yiu, Benjamin Chang, et al.</li>
+                            <li><strong>Published:</strong> November 4, 2025</li>
+                            <li><strong>arXiv ID:</strong> <a href="https://arxiv.org/abs/2511.02824" target="_blank">2511.02824</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <div class="scroll-top" id="scrollTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        ↑
+    </div>
+
+    <script>
+        // Reading Progress Bar
+        function updateReadingProgress() {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+            document.getElementById('readingProgress').style.width = scrollPercent + '%';
+        }
+
+        // Scroll to Top Button
+        function toggleScrollTop() {
+            const scrollTop = document.getElementById('scrollTop');
+            if (window.pageYOffset > 300) {
+                scrollTop.classList.add('show');
+            } else {
+                scrollTop.classList.remove('show');
+            }
+        }
+
+        // Event Listeners
+        window.addEventListener('scroll', () => {
+            updateReadingProgress();
+            toggleScrollTop();
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Initialize
+        updateReadingProgress();
+    </script>
+</body>
+</html>
